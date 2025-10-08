@@ -30,19 +30,6 @@ export function WaterTestForm() {
           className="space-y-6"
         >
           <div className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="leadInWater">Lead in Water (ppb)</Label>
-              <Input
-                id="leadInWater"
-                type="number"
-                step="0.01"
-                placeholder="Enter lead level"
-                value={waterData.leadInWater}
-                onChange={(e) => updateWaterData({ leadInWater: e.target.value })}
-                className="bg-background"
-              />
-            </div>
-
             <div className="space-y-4">
               <h3 className="font-semibold text-foreground text-sm">Metals in Drinking Water (ppb)</h3>
               <div className="grid gap-4 md:grid-cols-2">
@@ -167,6 +154,19 @@ export function WaterTestForm() {
               </div>
 
               <div className="space-y-2">
+                <Label htmlFor="pcbs">PCBs (ng/m³)</Label>
+                <Input
+                  id="pcbs"
+                  type="number"
+                  step="0.01"
+                  placeholder="Enter PCBs level"
+                  value={waterData.pcbs}
+                  onChange={(e) => updateWaterData({ pcbs: e.target.value })}
+                  className="bg-background"
+                />
+              </div>
+
+              <div className="col-span-2 space-y-2">
                 <Label htmlFor="microplastics">Microplastics (particles/L)</Label>
                 <Input
                   id="microplastics"

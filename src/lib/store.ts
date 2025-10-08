@@ -24,7 +24,6 @@ const initialData: TestData = {
     relativeHumidity: "",
     formaldehyde: "",
     tvocs: "",
-    pcbs: "",
   },
   water: {
     leadInWater: "",
@@ -38,14 +37,17 @@ const initialData: TestData = {
     selenium: "",
     pfas: "",
     microplastics: "",
+    pcbs: "",
   },
   dust: {
     leadDust: "",
+    surfaceType: "",
+    customSurface: "",
+    result: "",
   },
   surface: {
     leadPaintRoom1: "",
     leadPaintRoom2: "",
-    asbestos: "",
     mold: "",
   },
 };

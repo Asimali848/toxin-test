@@ -1,35 +1,11 @@
-"use client";
-
 import { Download, RotateCcw } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  PolarAngleAxis,
-  PolarGrid,
-  PolarRadiusAxis,
-  Radar,
-  RadarChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { Bar, BarChart, CartesianGrid, Pie, PieChart, ResponsiveContainer, XAxis, YAxis } from "recharts";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import {
   analyzeAirQuality,
   analyzeDustQuality,
@@ -40,13 +16,14 @@ import {
 } from "@/lib/analysis";
 import { generatePDF } from "@/lib/pdf-export";
 import { useTestStore } from "@/lib/store";
-import { toast } from "sonner";
+import Navbar from "./landing/navbar";
 
 export function ResultsDashboard() {
   const { data, resetData } = useTestStore();
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
   const airChartRef = useRef<HTMLDivElement>(null);
+  const dustChartRef = useRef<HTMLDivElement>(null);
   const waterChartRef = useRef<HTMLDivElement>(null);
   const surfaceChartRef = useRef<HTMLDivElement>(null);
   const summaryChartRef = useRef<HTMLDivElement>(null);
@@ -113,6 +90,19 @@ export function ResultsDashboard() {
     },
   ];
 
+  const dustChartData = [
+    {
+      name: "PM 2.5",
+      value: dustAnalysis.pm25?.value || 0,
+      level: dustAnalysis.pm25?.level,
+    },
+    {
+      name: "PM 10",
+      value: dustAnalysis.pm10?.value || 0,
+      level: dustAnalysis.pm10?.level,
+    },
+  ];
+
   const summaryData = [
     {
       category: "Air Quality",
@@ -135,26 +125,13 @@ export function ResultsDashboard() {
   const handleDownload = useCallback(async () => {
     setIsGeneratingPDF(true);
     try {
-      await generatePDF(
-        data,
-        airAnalysis,
-        waterAnalysis,
-        surfaceAnalysis,
-        dustAnalysis,
-        //@ts-ignore
-        {
-          airChart: airChartRef.current,
-          waterChart: waterChartRef.current,
-          surfaceChart: surfaceChartRef.current,
-          summaryChart: summaryChartRef.current,
-        }
-      );
+      await generatePDF(airAnalysis, waterAnalysis, surfaceAnalysis, dustAnalysis);
     } catch (_error) {
       toast.error("Failed to generate PDF. Please try again.");
     } finally {
       setIsGeneratingPDF(false);
     }
-  }, [data, airAnalysis, waterAnalysis, surfaceAnalysis, dustAnalysis]);
+  }, [airAnalysis, waterAnalysis, surfaceAnalysis, dustAnalysis]);
 
   const handleReset = () => {
     resetData();
@@ -162,30 +139,19 @@ export function ResultsDashboard() {
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
-      <div className="mx-auto max-w-7xl">
+      <Navbar />
+      <div className="mx-auto max-w-7xl pt-16">
         <header className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="mb-2 font-bold text-3xl text-foreground">
-              Environmental Test Results
-            </h1>
-            <p className="text-muted-foreground">
-              Comprehensive analysis of all test categories
-            </p>
+            <h1 className="mb-2 font-bold text-3xl text-foreground">Environmental Test Results</h1>
+            <p className="text-muted-foreground">Comprehensive analysis of all test categories</p>
           </div>
           <div className="flex gap-3">
-            <Button
-              variant="outline"
-              onClick={handleReset}
-              className="gap-2 bg-transparent"
-            >
+            <Button variant="outline" onClick={handleReset} className="gap-2 bg-transparent">
               <RotateCcw className="h-4 w-4" />
               New Test
             </Button>
-            <Button
-              onClick={handleDownload}
-              disabled={isGeneratingPDF}
-              className="gap-2"
-            >
+            <Button onClick={handleDownload} disabled={isGeneratingPDF} className="gap-2">
               <Download className="h-4 w-4" />
               {isGeneratingPDF ? "Generating..." : "Download PDF"}
             </Button>
@@ -195,12 +161,8 @@ export function ResultsDashboard() {
         <div className="mb-6 grid gap-6">
           <Card className="border-border bg-card">
             <CardHeader>
-              <CardTitle className="text-foreground">
-                Air Quality Analysis
-              </CardTitle>
-              <CardDescription>
-                Key air contaminants and their risk levels
-              </CardDescription>
+              <CardTitle className="text-foreground">Air Quality Analysis</CardTitle>
+              <CardDescription>Key air contaminants and their risk levels</CardDescription>
             </CardHeader>
             <CardContent>
               <div ref={airChartRef}>
@@ -215,38 +177,24 @@ export function ResultsDashboard() {
                 >
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={airChartData}>
-                      <CartesianGrid
-                        strokeDasharray="3 3"
-                        stroke="hsl(var(--primary))"
-                      />
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--primary))" />
                       <XAxis dataKey="name" stroke="hsl(var(--primary))" />
                       <YAxis stroke="hsl(var(--primary))" />
                       <ChartTooltip content={<ChartTooltipContent />} />
-                      <Bar
-                        dataKey="value"
-                        fill="hsl(var(--chart-2))"
-                        radius={[4, 4, 0, 0]}
-                      />
+                      <Bar dataKey="value" fill="var(--color-desktop)" radius={[4, 4, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </ChartContainer>
               </div>
               <div className="mt-4 space-y-2">
                 {Object.entries(airAnalysis).map(([key, result]) => (
-                  <div
-                    key={key}
-                    className="flex items-center justify-between rounded-lg bg-muted/50 p-3"
-                  >
+                  <div key={key} className="flex items-center justify-between rounded-lg bg-muted/50 p-3">
                     <span className="font-medium text-foreground text-sm capitalize">
                       {key.replace(/([A-Z])/g, " $1").trim()}
                     </span>
                     <div className="flex items-center gap-3">
-                      <span className="text-muted-foreground text-sm">
-                        {result.message}
-                      </span>
-                      <Badge className={getRiskBadgeClass(result.level)}>
-                        {result.level}
-                      </Badge>
+                      <span className="text-muted-foreground text-sm">{result.message}</span>
+                      <Badge className={getRiskBadgeClass(result.level)}>{result.level}</Badge>
                     </div>
                   </div>
                 ))}
@@ -256,12 +204,8 @@ export function ResultsDashboard() {
 
           <Card className="border-border bg-card">
             <CardHeader>
-              <CardTitle className="text-foreground">
-                Water Quality Analysis
-              </CardTitle>
-              <CardDescription>
-                Key water contaminants and their risk levels
-              </CardDescription>
+              <CardTitle className="text-foreground">Water Quality Analysis</CardTitle>
+              <CardDescription>Key water contaminants and their risk levels</CardDescription>
             </CardHeader>
             <CardContent>
               <div ref={waterChartRef}>
@@ -276,38 +220,24 @@ export function ResultsDashboard() {
                 >
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={waterChartData}>
-                      <CartesianGrid
-                        strokeDasharray="3 3"
-                        stroke="hsl(var(--primary))"
-                      />
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--primary))" />
                       <XAxis dataKey="name" stroke="hsl(var(--primary))" />
                       <YAxis stroke="hsl(var(--primary))" />
                       <ChartTooltip content={<ChartTooltipContent />} />
-                      <Bar
-                        dataKey="value"
-                        fill="hsl(var(--chart-4))"
-                        radius={[4, 4, 0, 0]}
-                      />
+                      <Bar dataKey="value" fill="hsl(var(--chart-4))" radius={[4, 4, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </ChartContainer>
               </div>
               <div className="mt-4 space-y-2">
                 {Object.entries(waterAnalysis).map(([key, result]) => (
-                  <div
-                    key={key}
-                    className="flex items-center justify-between rounded-lg bg-muted/50 p-3"
-                  >
+                  <div key={key} className="flex items-center justify-between rounded-lg bg-muted/50 p-3">
                     <span className="font-medium text-foreground text-sm capitalize">
                       {key.replace(/([A-Z])/g, " $1").trim()}
                     </span>
                     <div className="flex items-center gap-3">
-                      <span className="text-muted-foreground text-sm">
-                        {result.message}
-                      </span>
-                      <Badge className={getRiskBadgeClass(result.level)}>
-                        {result.level}
-                      </Badge>
+                      <span className="text-muted-foreground text-sm">{result.message}</span>
+                      <Badge className={getRiskBadgeClass(result.level)}>{result.level}</Badge>
                     </div>
                   </div>
                 ))}
@@ -317,12 +247,8 @@ export function ResultsDashboard() {
 
           <Card className="border-border bg-card">
             <CardHeader>
-              <CardTitle className="text-foreground">
-                Surface Quality Analysis
-              </CardTitle>
-              <CardDescription>
-                Surface contaminants and their risk levels
-              </CardDescription>
+              <CardTitle className="text-foreground">Surface Quality Analysis</CardTitle>
+              <CardDescription>Surface contaminants and their risk levels</CardDescription>
             </CardHeader>
             <CardContent>
               <div ref={surfaceChartRef}>
@@ -337,41 +263,24 @@ export function ResultsDashboard() {
                 >
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={surfaceChartData}>
-                      <CartesianGrid
-                        strokeDasharray="3 3"
-                        stroke="hsl(var(--border))"
-                      />
-                      <XAxis
-                        dataKey="name"
-                        stroke="hsl(var(--muted-foreground))"
-                      />
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" />
                       <YAxis stroke="hsl(var(--muted-foreground))" />
                       <ChartTooltip content={<ChartTooltipContent />} />
-                      <Bar
-                        dataKey="value"
-                        fill="hsl(var(--chart-1))"
-                        radius={[4, 4, 0, 0]}
-                      />
+                      <Bar dataKey="value" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </ChartContainer>
               </div>
               <div className="mt-4 space-y-2">
                 {Object.entries(surfaceAnalysis).map(([key, result]) => (
-                  <div
-                    key={key}
-                    className="flex items-center justify-between rounded-lg bg-muted/50 p-3"
-                  >
+                  <div key={key} className="flex items-center justify-between rounded-lg bg-muted/50 p-3">
                     <span className="font-medium text-foreground text-sm capitalize">
                       {key.replace(/([A-Z])/g, " $1").trim()}
                     </span>
                     <div className="flex items-center gap-3">
-                      <span className="text-muted-foreground text-sm">
-                        {result.message}
-                      </span>
-                      <Badge className={getRiskBadgeClass(result.level)}>
-                        {result.level}
-                      </Badge>
+                      <span className="text-muted-foreground text-sm">{result.message}</span>
+                      <Badge className={getRiskBadgeClass(result.level)}>{result.level}</Badge>
                     </div>
                   </div>
                 ))}
@@ -381,30 +290,53 @@ export function ResultsDashboard() {
 
           <Card className="border-border bg-card">
             <CardHeader>
-              <CardTitle className="text-foreground">
-                Dust Quality Analysis
-              </CardTitle>
-              <CardDescription>
-                Dust contaminants and their risk levels
-              </CardDescription>
+              <CardTitle className="text-foreground">Dust Quality Analysis</CardTitle>
+              <CardDescription>Dust contaminants and their risk levels</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 {Object.entries(dustAnalysis).map(([key, result]) => (
-                  <div
-                    key={key}
-                    className="flex items-center justify-between rounded-lg bg-muted/50 p-3"
-                  >
+                  <div key={key} className="flex items-center justify-between rounded-lg bg-muted/50 p-3">
                     <span className="font-medium text-foreground text-sm capitalize">
                       {key.replace(/([A-Z])/g, " $1").trim()}
                     </span>
                     <div className="flex items-center gap-3">
-                      <span className="text-muted-foreground text-sm">
-                        {result.message}
-                      </span>
-                      <Badge className={getRiskBadgeClass(result.level)}>
-                        {result.level}
-                      </Badge>
+                      <span className="text-muted-foreground text-sm">{result.message}</span>
+                      <Badge className={getRiskBadgeClass(result.level)}>{result.level}</Badge>
+                    </div>
+                  </div>
+                ))}
+              </div> */}
+              <div ref={dustChartRef}>
+                <ChartContainer
+                  config={{
+                    value: {
+                      label: "Value",
+                      color: "hsl(var(--chart-1))",
+                    },
+                  }}
+                  className="h-[300px]"
+                >
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={dustChartData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" />
+                      <YAxis stroke="hsl(var(--muted-foreground))" />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Bar dataKey="value" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
+              </div>
+              <div className="mt-4 space-y-2">
+                {Object.entries(dustAnalysis).map(([key, result]) => (
+                  <div key={key} className="flex items-center justify-between rounded-lg bg-muted/50 p-3">
+                    <span className="font-medium text-foreground text-sm capitalize">
+                      {key.replace(/([A-Z])/g, " $1").trim()}
+                    </span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-muted-foreground text-sm">{result.message}</span>
+                      <Badge className={getRiskBadgeClass(result.level)}>{result.level}</Badge>
                     </div>
                   </div>
                 ))}
@@ -414,12 +346,8 @@ export function ResultsDashboard() {
 
           <Card className="border-border bg-card">
             <CardHeader>
-              <CardTitle className="text-foreground">
-                Overall Environmental Health Summary
-              </CardTitle>
-              <CardDescription>
-                Comprehensive view of all test categories (100 = optimal)
-              </CardDescription>
+              <CardTitle className="text-foreground">Overall Environmental Health Summary</CardTitle>
+              <CardDescription>Comprehensive view of all test categories (100 = optimal)</CardDescription>
             </CardHeader>
             <CardContent>
               <div ref={summaryChartRef}>
@@ -433,26 +361,22 @@ export function ResultsDashboard() {
                   className="h-[400px]"
                 >
                   <ResponsiveContainer width="100%" height="100%">
-                    <RadarChart data={summaryData}>
-                      <PolarGrid stroke="hsl(var(--border))" />
-                      <PolarAngleAxis
-                        dataKey="category"
-                        stroke="hsl(var(--muted-foreground))"
+                    <PieChart>
+                      <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+                      <Pie
+                        data={summaryData.map((item) => ({
+                          name: item.category,
+                          value: item.score,
+                        }))}
+                        dataKey="value"
+                        nameKey="name"
+                        innerRadius={60}
+                        outerRadius={120}
+                        stroke="hsl(var(--border))"
+                        fill="hsl(var(--primary))"
+                        label
                       />
-                      <PolarRadiusAxis
-                        angle={90}
-                        domain={[0, 100]}
-                        stroke="hsl(var(--muted-foreground))"
-                      />
-                      <Radar
-                        name="Health Score"
-                        dataKey="score"
-                        stroke="hsl(var(--chart-1))"
-                        fill="hsl(var(--chart-1))"
-                        fillOpacity={0.6}
-                      />
-                      <Tooltip />
-                    </RadarChart>
+                    </PieChart>
                   </ResponsiveContainer>
                 </ChartContainer>
               </div>
@@ -461,12 +385,8 @@ export function ResultsDashboard() {
 
           <Card className="border-border bg-card">
             <CardHeader>
-              <CardTitle className="text-foreground">
-                Care Notes & Recommendations
-              </CardTitle>
-              <CardDescription>
-                Important safety information based on your results
-              </CardDescription>
+              <CardTitle className="text-foreground">Care Notes & Recommendations</CardTitle>
+              <CardDescription>Important safety information based on your results</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -494,23 +414,15 @@ export function ResultsDashboard() {
   );
 }
 
-function CareNote({
-  level,
-  title,
-  description,
-}: {
-  level: RiskLevel;
-  title: string;
-  description: string;
-}) {
+function CareNote({ level, title, description }: { level: RiskLevel; title: string; description: string }) {
   return (
     <div
       className={`rounded-lg border p-4 ${
         level === "normal"
           ? "border-green-500/20 bg-green-500/5"
           : level === "warning"
-          ? "border-yellow-500/20 bg-yellow-500/5"
-          : "border-red-500/20 bg-red-500/5"
+            ? "border-yellow-500/20 bg-yellow-500/5"
+            : "border-red-500/20 bg-red-500/5"
       }`}
     >
       <div className="flex items-start gap-3">
@@ -524,9 +436,7 @@ function CareNote({
   );
 }
 
-function calculateCategoryScore(
-  analysis: Record<string, { level: RiskLevel }>
-): number {
+function calculateCategoryScore(analysis: Record<string, { level: RiskLevel }>): number {
   const levels = Object.values(analysis).map((a) => a.level);
   const scores = levels.map((level) => {
     switch (level) {

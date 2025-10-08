@@ -7,7 +7,6 @@ export interface AirTestData {
   relativeHumidity: string;
   formaldehyde: string;
   tvocs: string;
-  pcbs: string;
 }
 
 export interface WaterTestData {
@@ -21,17 +20,20 @@ export interface WaterTestData {
   lead: string;
   selenium: string;
   pfas: string;
+  pcbs: string;
   microplastics: string;
 }
 
 export interface DustTestData {
+  surfaceType: string;
+  customSurface: string;
   leadDust: string;
+  result: string;
 }
 
 export interface SurfaceTestData {
   leadPaintRoom1: string;
   leadPaintRoom2: string;
-  asbestos: string;
   mold: string;
 }
 

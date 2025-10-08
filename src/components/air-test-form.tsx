@@ -1,5 +1,3 @@
-"use client";
-
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -134,7 +132,7 @@ export function AirTestForm() {
               />
             </div>
 
-            <div className="space-y-2">
+            {/* <div className="space-y-2">
               <Label htmlFor="pcbs">PCBs (ng/m³)</Label>
               <Input
                 id="pcbs"
@@ -145,7 +143,7 @@ export function AirTestForm() {
                 onChange={(e) => updateAirData({ pcbs: e.target.value })}
                 className="bg-background"
               />
-            </div>
+            </div> */}
           </div>
 
           <div className="flex justify-end pt-4">

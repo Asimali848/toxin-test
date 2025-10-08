@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTestStore } from "@/lib/store";
 
 export function SurfaceTestForm() {
@@ -58,22 +57,6 @@ export function SurfaceTestForm() {
                   />
                 </div>
               </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="asbestos">Asbestos Detection</Label>
-              <Select
-                value={surfaceData.asbestos}
-                onValueChange={(value: string) => updateSurfaceData({ asbestos: value })}
-              >
-                <SelectTrigger id="asbestos" className="bg-background">
-                  <SelectValue placeholder="Select detection result" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="not-detected">Not Detected</SelectItem>
-                  <SelectItem value="detected">Detected</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
 
             <div className="space-y-2">
