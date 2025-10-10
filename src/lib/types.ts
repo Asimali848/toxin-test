@@ -44,4 +44,11 @@ export interface TestData {
   surface: SurfaceTestData;
 }
 
+export interface UserInfo {
+  name: string;
+  email: string;
+  address: string;
+  phoneNumber: string;
+}
+
 export type TabType = "air" | "water" | "surface" | "dust";

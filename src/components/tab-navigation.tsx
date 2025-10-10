@@ -3,6 +3,8 @@
 import { useTestStore } from "@/lib/store";
 import type { TabType } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { ArrowLeft } from "lucide-react";
+import { Button } from "./ui/button";
 
 const tabs: { id: TabType; label: string; icon: string }[] = [
   { id: "air", label: "Air Tests", icon: "🌫️" },
@@ -12,11 +14,19 @@ const tabs: { id: TabType; label: string; icon: string }[] = [
 ];
 
 export function TabNavigation() {
-  const { currentTab, setCurrentTab } = useTestStore();
+  const { currentTab, setCurrentTab, setCurrentStep } = useTestStore();
+  
+  const handleBackToUserInfo = () => {
+    setCurrentStep("user-info");
+  };
 
   return (
     <div className="border-border border-b">
-      <nav className="flex gap-2 overflow-x-auto" aria-label="Test categories">
+      <nav className="flex gap-2 items-center justify-between overflow-x-auto" aria-label="Test categories">
+        <Button variant={"outline"} size="icon" onClick={handleBackToUserInfo}>
+        <ArrowLeft />
+        </Button>
+        <div className="w-full flex items-center justify-center">
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -32,6 +42,7 @@ export function TabNavigation() {
             {tab.label}
           </button>
         ))}
+        </div>
       </nav>
     </div>
   );

@@ -202,31 +202,116 @@
 
 import jsPDF from "jspdf";
 import type { RiskLevel } from "./analysis";
+import type { UserInfo } from "./types";
 
 export async function generatePDF(
   airAnalysis: Record<string, { value: number; level: RiskLevel; message: string }>,
   waterAnalysis: Record<string, { value: number; level: RiskLevel; message: string }>,
   surfaceAnalysis: Record<string, { value: number; level: RiskLevel; message: string }>,
   dustAnalysis: Record<string, { value: number; level: RiskLevel; message: string }>,
-  chartImage?: string,
+  userInfo: UserInfo,
+  chartImages?: {
+    airChart?: string;
+    waterChart?: string;
+    surfaceChart?: string;
+    dustChart?: string;
+    summaryChart?: string;
+  },
 ) {
   const pdf = new jsPDF("p", "mm", "a4");
   const pageWidth = pdf.internal.pageSize.getWidth();
   const pageHeight = pdf.internal.pageSize.getHeight();
   let yPosition = 20;
 
-  pdf.setFontSize(20);
+  // Header with logo/title
+  pdf.setFontSize(24);
   pdf.setFont("helvetica", "bold");
-  pdf.text("Environmental Test Results", pageWidth / 2, yPosition, { align: "center" });
-
-  yPosition += 10;
-  pdf.setFontSize(10);
+  pdf.setTextColor(59, 130, 246); // Blue color
+  pdf.text("Environmental Health Report", pageWidth / 2, yPosition, { align: "center" });
+  
+  yPosition += 8;
+  pdf.setFontSize(12);
   pdf.setFont("helvetica", "normal");
-  pdf.text(`Generated: ${new Date().toLocaleDateString()}`, pageWidth / 2, yPosition, { align: "center" });
+  pdf.setTextColor(0, 0, 0);
+  pdf.text("Comprehensive Environmental Testing Results", pageWidth / 2, yPosition, { align: "center" });
 
   yPosition += 15;
 
-  const addSection = (title: string, data: Record<string, { value: number; level: RiskLevel; message: string }>) => {
+  // Client Information Section
+  if (userInfo.name) {
+    pdf.setFontSize(14);
+    pdf.setFont("helvetica", "bold");
+    pdf.text("Client Information", 15, yPosition);
+    yPosition += 8;
+
+    pdf.setFontSize(10);
+    pdf.setFont("helvetica", "normal");
+    pdf.text(`Name: ${userInfo.name}`, 20, yPosition);
+    yPosition += 5;
+    pdf.text(`Email: ${userInfo.email}`, 20, yPosition);
+    yPosition += 5;
+    pdf.text(`Address: ${userInfo.address}`, 20, yPosition);
+    yPosition += 5;
+    pdf.text(`Phone: ${userInfo.phoneNumber}`, 20, yPosition);
+    yPosition += 10;
+  }
+
+  // Report Date
+  pdf.setFontSize(10);
+  pdf.setFont("helvetica", "normal");
+  pdf.text(`Report Generated: ${new Date().toLocaleDateString()}`, pageWidth / 2, yPosition, { align: "center" });
+  yPosition += 15;
+
+  // Client Message
+  pdf.setFontSize(12);
+  pdf.setFont("helvetica", "bold");
+  pdf.text("Dear Valued Client,", 15, yPosition);
+  yPosition += 8;
+
+  pdf.setFontSize(10);
+  pdf.setFont("helvetica", "normal");
+  const clientMessage = pdf.splitTextToSize(
+    "Thank you for choosing our environmental testing services. We are pleased to present your comprehensive environmental health report. This detailed analysis provides insights into the air quality, water safety, surface conditions, and dust levels in your environment. Our team of certified environmental professionals has conducted thorough testing to ensure your health and safety.",
+    pageWidth - 30,
+  );
+  pdf.text(clientMessage, 15, yPosition);
+  yPosition += clientMessage.length * 4 + 10;
+
+  // Add page break if needed
+  if (yPosition > pageHeight - 100) {
+    pdf.addPage();
+    yPosition = 20;
+  }
+
+
+  // Add sections with charts
+  addSectionWithChart("Air Quality Analysis", airAnalysis, chartImages?.airChart);
+  addSectionWithChart("Water Quality Analysis", waterAnalysis, chartImages?.waterChart);
+  addSectionWithChart("Surface Quality Analysis", surfaceAnalysis, chartImages?.surfaceChart);
+  addSectionWithChart("Dust Quality Analysis", dustAnalysis, chartImages?.dustChart);
+
+  // Summary Chart
+  if (chartImages?.summaryChart) {
+    if (yPosition > pageHeight - 120) {
+      pdf.addPage();
+      yPosition = 20;
+    }
+
+    pdf.setFontSize(14);
+    pdf.setFont("helvetica", "bold");
+    pdf.text("Environmental Health Summary", 15, yPosition);
+    yPosition += 8;
+    
+    pdf.setFontSize(10);
+    pdf.setFont("helvetica", "normal");
+    pdf.text("Overall environmental health scores across all test categories", 15, yPosition);
+    yPosition += 10;
+
+    pdf.addImage(chartImages.summaryChart, "PNG", 25, yPosition, pageWidth - 50, 80);
+    yPosition += 90;
+  }
+
+  function addSectionWithChart(title: string, data: Record<string, { value: number; level: RiskLevel; message: string }>, chartImage?: string) {
     if (yPosition > pageHeight - 60) {
       pdf.addPage();
       yPosition = 20;
@@ -257,29 +342,27 @@ export async function generatePDF(
       yPosition += 7;
     });
 
-    yPosition += 5;
-  };
-
-  addSection("Air Quality Tests", airAnalysis);
-  addSection("Water Quality Tests", waterAnalysis);
-  addSection("Surface Quality Tests", surfaceAnalysis);
-  addSection("Dust Quality Tests", dustAnalysis);
-
-  if (chartImage) {
-    if (yPosition > pageHeight - 120) {
-      pdf.addPage();
-      yPosition = 20;
+    // Add chart if available
+    if (chartImage) {
+      if (yPosition > pageHeight - 100) {
+        pdf.addPage();
+        yPosition = 20;
+      }
+      
+      yPosition += 5;
+      pdf.setFontSize(10);
+      pdf.setFont("helvetica", "normal");
+      pdf.text("Visual Analysis:", 20, yPosition);
+      yPosition += 8;
+      
+      pdf.addImage(chartImage, "PNG", 25, yPosition, pageWidth - 50, 60);
+      yPosition += 70;
     }
 
-    pdf.setFontSize(14);
-    pdf.setFont("helvetica", "bold");
-    pdf.text("Environmental Summary Chart", 15, yPosition);
-    yPosition += 10;
-
-    pdf.addImage(chartImage, "PNG", 25, yPosition, pageWidth - 50, 90);
-    yPosition += 100;
+    yPosition += 5;
   }
 
+  // Recommendations Page
   pdf.addPage();
   yPosition = 20;
 
@@ -326,8 +409,111 @@ export async function generatePDF(
     pageWidth - 40,
   );
   pdf.text(highText, 20, yPosition);
+  yPosition += highText.length * 5 + 15;
 
-  pdf.save(`environmental-test-results-${new Date().toISOString().split("T")[0]}.pdf`);
+  // Thank You Message
+  pdf.setFontSize(12);
+  pdf.setFont("helvetica", "bold");
+  pdf.text("Thank You for Your Trust", 15, yPosition);
+  yPosition += 8;
+
+  pdf.setFontSize(10);
+  pdf.setFont("helvetica", "normal");
+  const thankYouMessage = pdf.splitTextToSize(
+    "We appreciate your commitment to environmental health and safety. Our team is dedicated to providing accurate, reliable testing services to help you maintain a healthy living environment. If you have any questions about this report or need additional testing services, please don't hesitate to contact us. We look forward to continuing to serve your environmental health needs.",
+    pageWidth - 30,
+  );
+  pdf.text(thankYouMessage, 15, yPosition);
+  yPosition += thankYouMessage.length * 4 + 15;
+
+  // Contact Information
+  pdf.setFontSize(10);
+  pdf.setFont("helvetica", "bold");
+  pdf.text("Contact Information:", 15, yPosition);
+  yPosition += 6;
+  
+  pdf.setFontSize(9);
+  pdf.setFont("helvetica", "normal");
+  pdf.text("Environmental Health Services", 15, yPosition);
+  yPosition += 4;
+  pdf.text("Phone: (555) 123-4567", 15, yPosition);
+  yPosition += 4;
+  pdf.text("Email: info@envhealth.com", 15, yPosition);
+  yPosition += 4;
+  pdf.text("Website: www.envhealth.com", 15, yPosition);
+
+  // Footer
+  yPosition = pageHeight - 20;
+  pdf.setFontSize(8);
+  pdf.setFont("helvetica", "normal");
+  pdf.setTextColor(128, 128, 128);
+  pdf.text("This report is confidential and intended solely for the client named above.", pageWidth / 2, yPosition, { align: "center" });
+  yPosition += 4;
+  pdf.text("© 2024 Environmental Health Services. All rights reserved.", pageWidth / 2, yPosition, { align: "center" });
+
+  // Generate filename with client name
+  const clientName = userInfo.name ? userInfo.name.replace(/\s+/g, '-').toLowerCase() : 'client';
+  const fileName = `environmental-report-${clientName}-${new Date().toISOString().split("T")[0]}.pdf`;
+  
+  // Return PDF data for email sending
+  return {
+    pdfData: pdf.output('datauristring'),
+    fileName: fileName,
+    save: () => pdf.save(fileName)
+  };
+}
+
+export async function sendEmailWithPDF(
+  email: string,
+  pdfData: string,
+  fileName: string,
+  userInfo: UserInfo
+): Promise<boolean> {
+  try {
+    // Convert data URI to blob
+    const response = await fetch(pdfData);
+    const blob = await response.blob();
+    
+    // Create FormData for email service
+    const formData = new FormData();
+    formData.append('email', email);
+    formData.append('subject', `Environmental Test Report - ${userInfo.name || 'Client'}`);
+    formData.append('body', `
+Dear ${userInfo.name || 'Valued Client'},
+
+Thank you for using our environmental testing services. Please find attached your comprehensive environmental health report.
+
+This report contains detailed analysis of:
+- Air Quality Tests
+- Water Quality Tests  
+- Surface Quality Tests
+- Dust Quality Tests
+
+If you have any questions about this report, please don't hesitate to contact us.
+
+Best regards,
+Environmental Health Services Team
+    `);
+    formData.append('attachment', blob, fileName);
+    
+    // For demo purposes, we'll simulate email sending
+    // In a real application, you would integrate with an email service like:
+    // - EmailJS
+    // - SendGrid
+    // - AWS SES
+    // - Nodemailer with SMTP
+    
+    console.log('Email would be sent to:', email);
+    console.log('PDF attachment:', fileName);
+    
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    return true;
+  } catch (error) {
+    console.error('Error sending email:', error);
+    return false;
+  }
 }
 
 function getRiskColorRGB(level: RiskLevel): { r: number; g: number; b: number } {
