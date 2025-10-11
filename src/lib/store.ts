@@ -63,6 +63,8 @@ const initialUserInfo: UserInfo = {
   email: "",
   address: "",
   phoneNumber: "",
+  inspectionDate: "",
+  inspector: "",
 };
 
 export const useTestStore = create<TestStore>((set) => ({

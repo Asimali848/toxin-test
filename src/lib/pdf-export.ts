@@ -223,19 +223,64 @@ export async function generatePDF(
   const pageHeight = pdf.internal.pageSize.getHeight();
   let yPosition = 20;
 
-  // Header with logo/title
+  // Header with Toxin Testers branding
   pdf.setFontSize(24);
   pdf.setFont("helvetica", "bold");
   pdf.setTextColor(59, 130, 246); // Blue color
-  pdf.text("Environmental Health Report", pageWidth / 2, yPosition, { align: "center" });
+  pdf.text("Toxin Testers", pageWidth / 2, yPosition, { align: "center" });
   
   yPosition += 8;
+  pdf.setFontSize(18);
+  pdf.setFont("helvetica", "bold");
+  pdf.setTextColor(0, 0, 0);
+  pdf.text("Environmental Test Results", pageWidth / 2, yPosition, { align: "center" });
+  
+  yPosition += 6;
   pdf.setFontSize(12);
   pdf.setFont("helvetica", "normal");
-  pdf.setTextColor(0, 0, 0);
-  pdf.text("Comprehensive Environmental Testing Results", pageWidth / 2, yPosition, { align: "center" });
+  pdf.setTextColor(100, 100, 100);
+  pdf.text("Comprehensive analysis of all test categories", pageWidth / 2, yPosition, { align: "center" });
 
   yPosition += 15;
+
+  // Report Header Block
+  pdf.setFontSize(10);
+  pdf.setFont("helvetica", "normal");
+  pdf.setTextColor(0, 0, 0);
+  
+  // Draw header box
+  pdf.setDrawColor(200, 200, 200);
+  pdf.setFillColor(248, 249, 250);
+  pdf.rect(15, yPosition, pageWidth - 30, 25, 'FD');
+  
+  yPosition += 5;
+  pdf.setFont("helvetica", "bold");
+  pdf.text("Property:", 20, yPosition);
+  pdf.setFont("helvetica", "normal");
+  pdf.text(userInfo.address || "Not specified", 45, yPosition);
+  
+  pdf.text("Inspection Date:", 20, yPosition + 4);
+  pdf.text(userInfo.inspectionDate ? new Date(userInfo.inspectionDate).toLocaleDateString('en-US', { 
+    year: 'numeric', 
+    month: 'short', 
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  }) : new Date().toLocaleDateString('en-US', { 
+    year: 'numeric', 
+    month: 'short', 
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  }), 45, yPosition + 4);
+  
+  pdf.text("Inspector:", 20, yPosition + 8);
+  pdf.text(userInfo.inspector || "M. Eckstein", 45, yPosition + 8);
+  
+  pdf.text("Report ID:", 20, yPosition + 12);
+  pdf.text(`TT-2025-${Math.floor(Math.random() * 9000) + 1000}`, 45, yPosition + 12);
+  
+  yPosition += 30;
 
   // Client Information Section
   if (userInfo.name) {
@@ -302,8 +347,28 @@ export async function generatePDF(
     pdf.text("Environmental Health Summary", 15, yPosition);
     yPosition += 8;
     
+    // Environmental Health Score
+    pdf.setFontSize(12);
+    pdf.setFont("helvetica", "bold");
+    pdf.setTextColor(59, 130, 246);
+    pdf.text("Environmental Health Score", pageWidth / 2, yPosition, { align: "center" });
+    yPosition += 6;
+    
+    pdf.setFontSize(20);
+    pdf.setFont("helvetica", "bold");
+    pdf.setTextColor(0, 0, 0);
+    const weightedScore = calculateWeightedScore(airAnalysis, waterAnalysis, surfaceAnalysis, dustAnalysis);
+    pdf.text(`${Math.round(weightedScore)}/100`, pageWidth / 2, yPosition, { align: "center" });
+    yPosition += 8;
+    
+    pdf.setFontSize(9);
+    pdf.setTextColor(100, 100, 100);
+    pdf.text("Weighted average: Air & Water (30% each), Surface & Dust (20% each)", pageWidth / 2, yPosition, { align: "center" });
+    yPosition += 10;
+    
     pdf.setFontSize(10);
     pdf.setFont("helvetica", "normal");
+    pdf.setTextColor(0, 0, 0);
     pdf.text("Overall environmental health scores across all test categories", 15, yPosition);
     yPosition += 10;
 
@@ -324,6 +389,33 @@ export async function generatePDF(
 
     pdf.setFontSize(10);
     pdf.setFont("helvetica", "normal");
+
+    // Add threshold references based on section
+    if (title.includes("Air Quality")) {
+      pdf.setFontSize(9);
+      pdf.setTextColor(100, 100, 100);
+      pdf.text("Thresholds: CO₂ ≤1000 ppm, CO ≤9 ppm, PM 2.5 ≤12 µg/m³, RH 40-55%", 20, yPosition);
+      yPosition += 5;
+      pdf.setTextColor(0, 0, 0);
+    } else if (title.includes("Water Quality")) {
+      pdf.setFontSize(9);
+      pdf.setTextColor(100, 100, 100);
+      pdf.text("MCL Standards: Lead 15 ppb, Arsenic 10 ppb, PFAS 4 ppt", 20, yPosition);
+      yPosition += 5;
+      pdf.setTextColor(0, 0, 0);
+    } else if (title.includes("Surface Quality")) {
+      pdf.setFontSize(9);
+      pdf.setTextColor(100, 100, 100);
+      pdf.text("Thresholds: Lead Paint ≥0.5 mg/cm² (NYC Local Law 31), Mold >500 CFU/cm²", 20, yPosition);
+      yPosition += 5;
+      pdf.setTextColor(0, 0, 0);
+    } else if (title.includes("Dust Quality")) {
+      pdf.setFontSize(9);
+      pdf.setTextColor(100, 100, 100);
+      pdf.text("EPA Clearance: Floor <10 µg/ft², Sill <100 µg/ft², Trough <400 µg/ft²", 20, yPosition);
+      yPosition += 5;
+      pdf.setTextColor(0, 0, 0);
+    }
 
     Object.entries(data).forEach(([key, result]) => {
       if (yPosition > pageHeight - 20) {
@@ -374,7 +466,7 @@ export async function generatePDF(
   pdf.setFontSize(10);
   pdf.setFont("helvetica", "bold");
   pdf.setTextColor(34, 197, 94);
-  pdf.text("Normal Levels:", 20, yPosition);
+  pdf.text("✅ Normal Levels:", 20, yPosition);
   yPosition += 6;
   pdf.setFont("helvetica", "normal");
   pdf.setTextColor(0, 0, 0);
@@ -387,7 +479,7 @@ export async function generatePDF(
 
   pdf.setFont("helvetica", "bold");
   pdf.setTextColor(234, 179, 8);
-  pdf.text("Warning Levels:", 20, yPosition);
+  pdf.text("⚠️ Warning Levels:", 20, yPosition);
   yPosition += 6;
   pdf.setFont("helvetica", "normal");
   pdf.setTextColor(0, 0, 0);
@@ -400,7 +492,7 @@ export async function generatePDF(
 
   pdf.setFont("helvetica", "bold");
   pdf.setTextColor(239, 68, 68);
-  pdf.text("High Risk Levels:", 20, yPosition);
+  pdf.text("🚨 High Risk Levels:", 20, yPosition);
   yPosition += 6;
   pdf.setFont("helvetica", "normal");
   pdf.setTextColor(0, 0, 0);
@@ -410,6 +502,56 @@ export async function generatePDF(
   );
   pdf.text(highText, 20, yPosition);
   yPosition += highText.length * 5 + 15;
+
+  // Next Steps Section
+  pdf.setFontSize(12);
+  pdf.setFont("helvetica", "bold");
+  pdf.setTextColor(59, 130, 246);
+  pdf.text("Next Steps", 15, yPosition);
+  yPosition += 8;
+
+  pdf.setFontSize(10);
+  pdf.setFont("helvetica", "normal");
+  pdf.setTextColor(0, 0, 0);
+  
+  pdf.setFont("helvetica", "bold");
+  pdf.setTextColor(239, 68, 68);
+  pdf.text("🚨 High Risk:", 20, yPosition);
+  yPosition += 5;
+  pdf.setFont("helvetica", "normal");
+  pdf.setTextColor(0, 0, 0);
+  const highRiskSteps = pdf.splitTextToSize(
+    "You may want to consider contacting a certified abatement contractor.",
+    pageWidth - 40,
+  );
+  pdf.text(highRiskSteps, 20, yPosition);
+  yPosition += highRiskSteps.length * 4 + 6;
+
+  pdf.setFont("helvetica", "bold");
+  pdf.setTextColor(234, 179, 8);
+  pdf.text("⚠️ Warning:", 20, yPosition);
+  yPosition += 5;
+  pdf.setFont("helvetica", "normal");
+  pdf.setTextColor(0, 0, 0);
+  const warningSteps = pdf.splitTextToSize(
+    "Re-test in 3 months; ensure windows remain closed during test period.",
+    pageWidth - 40,
+  );
+  pdf.text(warningSteps, 20, yPosition);
+  yPosition += warningSteps.length * 4 + 6;
+
+  pdf.setFont("helvetica", "bold");
+  pdf.setTextColor(34, 197, 94);
+  pdf.text("✅ Normal:", 20, yPosition);
+  yPosition += 5;
+  pdf.setFont("helvetica", "normal");
+  pdf.setTextColor(0, 0, 0);
+  const normalSteps = pdf.splitTextToSize(
+    "Continue regular monitoring and maintenance schedules.",
+    pageWidth - 40,
+  );
+  pdf.text(normalSteps, 20, yPosition);
+  yPosition += normalSteps.length * 4 + 15;
 
   // Thank You Message
   pdf.setFontSize(12);
@@ -525,6 +667,40 @@ function getRiskColorRGB(level: RiskLevel): { r: number; g: number; b: number } 
     case "high":
       return { r: 239, g: 68, b: 68 };
   }
+}
+
+function calculateCategoryScore(
+  analysis: Record<string, { level: RiskLevel }>
+): number {
+  const levels = Object.values(analysis).map((a) => a.level);
+  const scores = levels.map((level) => {
+    switch (level) {
+      case "normal":
+        return 100;
+      case "warning":
+        return 60;
+      case "high":
+        return 20;
+      default:
+        return 0;
+    }
+  });
+  return scores.length > 0 ? scores.reduce((a: number, b: number) => a + b, 0) / scores.length : 0;
+}
+
+function calculateWeightedScore(
+  airAnalysis: Record<string, { level: RiskLevel }>,
+  waterAnalysis: Record<string, { level: RiskLevel }>,
+  surfaceAnalysis: Record<string, { level: RiskLevel }>,
+  dustAnalysis: Record<string, { level: RiskLevel }>
+): number {
+  const airScore = calculateCategoryScore(airAnalysis);
+  const waterScore = calculateCategoryScore(waterAnalysis);
+  const surfaceScore = calculateCategoryScore(surfaceAnalysis);
+  const dustScore = calculateCategoryScore(dustAnalysis);
+  
+  // Weighted formula: Air & Water (30% each), Surface & Dust (20% each)
+  return (airScore * 0.3) + (waterScore * 0.3) + (surfaceScore * 0.2) + (dustScore * 0.2);
 }
 
 export function getRiskColor(level: RiskLevel): string {

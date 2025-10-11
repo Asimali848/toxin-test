@@ -49,6 +49,8 @@ export interface UserInfo {
   email: string;
   address: string;
   phoneNumber: string;
+  inspectionDate: string;
+  inspector: string;
 }
 
 export type TabType = "air" | "water" | "surface" | "dust";

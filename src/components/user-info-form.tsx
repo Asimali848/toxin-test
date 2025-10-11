@@ -26,6 +26,8 @@ const userInfoSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   address: z.string().min(5, "Address must be at least 5 characters"),
   phoneNumber: z.string().min(10, "Phone number must be at least 10 digits"),
+  inspectionDate: z.string().min(1, "Inspection date is required"),
+  inspector: z.string().min(2, "Inspector name must be at least 2 characters"),
 });
 
 type UserInfoFormData = z.infer<typeof userInfoSchema>;
@@ -45,6 +47,8 @@ export function UserInfoForm({ onNext }: UserInfoFormProps) {
       email: userInfo.email,
       address: userInfo.address,
       phoneNumber: userInfo.phoneNumber,
+      inspectionDate: userInfo.inspectionDate || new Date().toISOString().split('T')[0],
+      inspector: userInfo.inspector || "M. Eckstein",
     },
   });
 
@@ -144,6 +148,46 @@ export function UserInfoForm({ onNext }: UserInfoFormProps) {
                       <Input
                         type="tel"
                         placeholder="Enter your phone number"
+                        className="bg-background text-foreground"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="inspectionDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-foreground">
+                      Inspection Date
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        type="date"
+                        className="bg-background text-foreground"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="inspector"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-foreground">
+                      Inspector Name
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Enter inspector name"
                         className="bg-background text-foreground"
                         {...field}
                       />
