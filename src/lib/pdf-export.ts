@@ -1,204 +1,3 @@
-// import jsPDF from "jspdf";
-// import type { RiskLevel } from "./analysis";
-
-// export async function generatePDF(
-//   airAnalysis: Record<string, { value: number; level: RiskLevel; message: string }>,
-//   waterAnalysis: Record<string, { value: number; level: RiskLevel; message: string }>,
-//   surfaceAnalysis: Record<string, { value: number; level: RiskLevel; message: string }>,
-//   dustAnalysis: Record<string, { value: number; level: RiskLevel; message: string }>,
-// ) {
-//   const pdf = new jsPDF("p", "mm", "a4");
-//   const pageWidth = pdf.internal.pageSize.getWidth();
-//   const pageHeight = pdf.internal.pageSize.getHeight();
-//   let yPosition = 20;
-
-//   // Title
-//   pdf.setFontSize(20);
-//   pdf.setFont("helvetica", "bold");
-//   pdf.text("Environmental Test Results", pageWidth / 2, yPosition, { align: "center" });
-
-//   yPosition += 10;
-//   pdf.setFontSize(10);
-//   pdf.setFont("helvetica", "normal");
-//   pdf.text(`Generated: ${new Date().toLocaleDateString()}`, pageWidth / 2, yPosition, { align: "center" });
-
-//   yPosition += 15;
-
-//   // Air Quality Section
-//   pdf.setFontSize(14);
-//   pdf.setFont("helvetica", "bold");
-//   pdf.text("Air Quality Tests", 15, yPosition);
-//   yPosition += 8;
-
-//   pdf.setFontSize(10);
-//   pdf.setFont("helvetica", "normal");
-//   Object.entries(airAnalysis).forEach(([key, result]) => {
-//     const label = key.replace(/([A-Z])/g, " $1").trim();
-//     const color = getRiskColorRGB(result.level);
-//     pdf.setTextColor(color.r, color.g, color.b);
-//     pdf.text(`${label}: ${result.value} - ${result.level.toUpperCase()}`, 20, yPosition);
-//     pdf.setTextColor(0, 0, 0);
-//     yPosition += 5;
-//     pdf.setFontSize(9);
-//     pdf.text(`  ${result.message}`, 20, yPosition);
-//     pdf.setFontSize(10);
-//     yPosition += 7;
-//   });
-
-//   yPosition += 5;
-
-//   // Water Quality Section
-//   if (yPosition > pageHeight - 60) {
-//     pdf.addPage();
-//     yPosition = 20;
-//   }
-
-//   pdf.setFontSize(14);
-//   pdf.setFont("helvetica", "bold");
-//   pdf.text("Water Quality Tests", 15, yPosition);
-//   yPosition += 8;
-
-//   pdf.setFontSize(10);
-//   pdf.setFont("helvetica", "normal");
-//   Object.entries(waterAnalysis).forEach(([key, result]) => {
-//     if (yPosition > pageHeight - 20) {
-//       pdf.addPage();
-//       yPosition = 20;
-//     }
-//     const label = key.replace(/([A-Z])/g, " $1").trim();
-//     const color = getRiskColorRGB(result.level);
-//     pdf.setTextColor(color.r, color.g, color.b);
-//     pdf.text(`${label}: ${result.value} - ${result.level.toUpperCase()}`, 20, yPosition);
-//     pdf.setTextColor(0, 0, 0);
-//     yPosition += 5;
-//     pdf.setFontSize(9);
-//     pdf.text(`  ${result.message}`, 20, yPosition);
-//     pdf.setFontSize(10);
-//     yPosition += 7;
-//   });
-
-//   yPosition += 5;
-
-//   // Surface Quality Section
-//   if (yPosition > pageHeight - 60) {
-//     pdf.addPage();
-//     yPosition = 20;
-//   }
-
-//   pdf.setFontSize(14);
-//   pdf.setFont("helvetica", "bold");
-//   pdf.text("Surface Quality Tests", 15, yPosition);
-//   yPosition += 8;
-
-//   pdf.setFontSize(10);
-//   pdf.setFont("helvetica", "normal");
-//   Object.entries(surfaceAnalysis).forEach(([key, result]) => {
-//     if (yPosition > pageHeight - 20) {
-//       pdf.addPage();
-//       yPosition = 20;
-//     }
-//     const label = key.replace(/([A-Z])/g, " $1").trim();
-//     const color = getRiskColorRGB(result.level);
-//     pdf.setTextColor(color.r, color.g, color.b);
-//     pdf.text(`${label}: ${result.value} - ${result.level.toUpperCase()}`, 20, yPosition);
-//     pdf.setTextColor(0, 0, 0);
-//     yPosition += 5;
-//     pdf.setFontSize(9);
-//     pdf.text(`  ${result.message}`, 20, yPosition);
-//     pdf.setFontSize(10);
-//     yPosition += 7;
-//   });
-
-//   yPosition += 5;
-
-//   // Dust Quality Section
-//   if (yPosition > pageHeight - 40) {
-//     pdf.addPage();
-//     yPosition = 20;
-//   }
-
-//   pdf.setFontSize(14);
-//   pdf.setFont("helvetica", "bold");
-//   pdf.text("Dust Quality Tests", 15, yPosition);
-//   yPosition += 8;
-
-//   pdf.setFontSize(10);
-//   pdf.setFont("helvetica", "normal");
-//   Object.entries(dustAnalysis).forEach(([key, result]) => {
-//     const label = key.replace(/([A-Z])/g, " $1").trim();
-//     const color = getRiskColorRGB(result.level);
-//     pdf.setTextColor(color.r, color.g, color.b);
-//     pdf.text(`${label}: ${result.value} - ${result.level.toUpperCase()}`, 20, yPosition);
-//     pdf.setTextColor(0, 0, 0);
-//     yPosition += 5;
-//     pdf.setFontSize(9);
-//     pdf.text(`  ${result.message}`, 20, yPosition);
-//     pdf.setFontSize(10);
-//     yPosition += 7;
-//   });
-
-//   // Add new page for recommendations
-//   pdf.addPage();
-//   yPosition = 20;
-
-//   pdf.setFontSize(14);
-//   pdf.setFont("helvetica", "bold");
-//   pdf.text("Care Notes & Recommendations", 15, yPosition);
-//   yPosition += 10;
-
-//   pdf.setFontSize(10);
-//   pdf.setFont("helvetica", "bold");
-//   pdf.setTextColor(34, 197, 94); // Green
-//   pdf.text("Normal Levels:", 20, yPosition);
-//   yPosition += 6;
-//   pdf.setFont("helvetica", "normal");
-//   pdf.setTextColor(0, 0, 0);
-//   const normalText = pdf.splitTextToSize(
-//     "Parameters within normal range require routine monitoring. Continue regular maintenance and testing schedules.",
-//     pageWidth - 40,
-//   );
-//   pdf.text(normalText, 20, yPosition);
-//   yPosition += normalText.length * 5 + 8;
-
-//   pdf.setFont("helvetica", "bold");
-//   pdf.setTextColor(234, 179, 8); // Yellow
-//   pdf.text("Warning Levels:", 20, yPosition);
-//   yPosition += 6;
-//   pdf.setFont("helvetica", "normal");
-//   pdf.setTextColor(0, 0, 0);
-//   const warningText = pdf.splitTextToSize(
-//     "Elevated parameters require attention. Investigate sources, improve ventilation, and consider professional assessment. Retest within 30 days.",
-//     pageWidth - 40,
-//   );
-//   pdf.text(warningText, 20, yPosition);
-//   yPosition += warningText.length * 5 + 8;
-
-//   pdf.setFont("helvetica", "bold");
-//   pdf.setTextColor(239, 68, 68); // Red
-//   pdf.text("High Risk Levels:", 20, yPosition);
-//   yPosition += 6;
-//   pdf.setFont("helvetica", "normal");
-//   pdf.setTextColor(0, 0, 0);
-//   const highText = pdf.splitTextToSize(
-//     "Immediate action required. Contact environmental health professionals for remediation. Limit exposure until levels are reduced. Follow all safety protocols.",
-//     pageWidth - 40,
-//   );
-//   pdf.text(highText, 20, yPosition);
-
-//   // Save the PDF
-//   pdf.save(`environmental-test-results-${new Date().toISOString().split("T")[0]}.pdf`);
-// }
-
-// function getRiskColorRGB(level: RiskLevel): { r: number; g: number; b: number } {
-//   switch (level) {
-//     case "normal":
-//       return { r: 34, g: 197, b: 94 }; // Green
-//     case "warning":
-//       return { r: 234, g: 179, b: 8 }; // Yellow
-//     case "high":
-//       return { r: 239, g: 68, b: 68 }; // Red
-//   }
-// }
 
 import jsPDF from "jspdf";
 import type { RiskLevel } from "./analysis";
@@ -228,13 +27,13 @@ export async function generatePDF(
   pdf.setFont("helvetica", "bold");
   pdf.setTextColor(59, 130, 246); // Blue color
   pdf.text("Toxin Testers", pageWidth / 2, yPosition, { align: "center" });
-  
+
   yPosition += 8;
   pdf.setFontSize(18);
   pdf.setFont("helvetica", "bold");
   pdf.setTextColor(0, 0, 0);
   pdf.text("Environmental Test Results", pageWidth / 2, yPosition, { align: "center" });
-  
+
   yPosition += 6;
   pdf.setFontSize(12);
   pdf.setFont("helvetica", "normal");
@@ -247,39 +46,45 @@ export async function generatePDF(
   pdf.setFontSize(10);
   pdf.setFont("helvetica", "normal");
   pdf.setTextColor(0, 0, 0);
-  
+
   // Draw header box
   pdf.setDrawColor(200, 200, 200);
   pdf.setFillColor(248, 249, 250);
-  pdf.rect(15, yPosition, pageWidth - 30, 25, 'FD');
-  
+  pdf.rect(15, yPosition, pageWidth - 30, 25, "FD");
+
   yPosition += 5;
   pdf.setFont("helvetica", "bold");
   pdf.text("Property:", 20, yPosition);
   pdf.setFont("helvetica", "normal");
   pdf.text(userInfo.address || "Not specified", 45, yPosition);
-  
+
   pdf.text("Inspection Date:", 20, yPosition + 4);
-  pdf.text(userInfo.inspectionDate ? new Date(userInfo.inspectionDate).toLocaleDateString('en-US', { 
-    year: 'numeric', 
-    month: 'short', 
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  }) : new Date().toLocaleDateString('en-US', { 
-    year: 'numeric', 
-    month: 'short', 
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  }), 45, yPosition + 4);
-  
+  pdf.text(
+    userInfo.inspectionDate
+      ? new Date(userInfo.inspectionDate).toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      : new Date().toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+    45,
+    yPosition + 4,
+  );
+
   pdf.text("Inspector:", 20, yPosition + 8);
   pdf.text(userInfo.inspector || "M. Eckstein", 45, yPosition + 8);
-  
+
   pdf.text("Report ID:", 20, yPosition + 12);
   pdf.text(`TT-2025-${Math.floor(Math.random() * 9000) + 1000}`, 45, yPosition + 12);
-  
+
   yPosition += 30;
 
   // Client Information Section
@@ -328,7 +133,6 @@ export async function generatePDF(
     yPosition = 20;
   }
 
-
   // Add sections with charts
   addSectionWithChart("Air Quality Analysis", airAnalysis, chartImages?.airChart);
   addSectionWithChart("Water Quality Analysis", waterAnalysis, chartImages?.waterChart);
@@ -346,37 +150,51 @@ export async function generatePDF(
     pdf.setFont("helvetica", "bold");
     pdf.text("Environmental Health Summary", 15, yPosition);
     yPosition += 8;
-    
+
     // Environmental Health Score
     pdf.setFontSize(12);
     pdf.setFont("helvetica", "bold");
     pdf.setTextColor(59, 130, 246);
     pdf.text("Environmental Health Score", pageWidth / 2, yPosition, { align: "center" });
     yPosition += 6;
-    
+
     pdf.setFontSize(20);
     pdf.setFont("helvetica", "bold");
     pdf.setTextColor(0, 0, 0);
     const weightedScore = calculateWeightedScore(airAnalysis, waterAnalysis, surfaceAnalysis, dustAnalysis);
     pdf.text(`${Math.round(weightedScore)}/100`, pageWidth / 2, yPosition, { align: "center" });
     yPosition += 8;
-    
+
     pdf.setFontSize(9);
     pdf.setTextColor(100, 100, 100);
-    pdf.text("Weighted average: Air & Water (30% each), Surface & Dust (20% each)", pageWidth / 2, yPosition, { align: "center" });
+    pdf.text("Weighted average: Air & Water (30% each), Surface & Dust (20% each)", pageWidth / 2, yPosition, {
+      align: "center",
+    });
     yPosition += 10;
-    
+
     pdf.setFontSize(10);
     pdf.setFont("helvetica", "normal");
     pdf.setTextColor(0, 0, 0);
     pdf.text("Overall environmental health scores across all test categories", 15, yPosition);
     yPosition += 10;
 
-    pdf.addImage(chartImages.summaryChart, "PNG", 25, yPosition, pageWidth - 50, 80);
-    yPosition += 90;
+    try {
+      pdf.addImage(chartImages.summaryChart, "PNG", 25, yPosition, pageWidth - 50, 80);
+      yPosition += 90;
+    } catch (_error) {
+      pdf.setFontSize(9);
+      pdf.setTextColor(150, 150, 150);
+      pdf.text("Summary chart could not be displayed", 25, yPosition);
+      pdf.setTextColor(0, 0, 0);
+      yPosition += 30;
+    }
   }
 
-  function addSectionWithChart(title: string, data: Record<string, { value: number; level: RiskLevel; message: string }>, chartImage?: string) {
+  function addSectionWithChart(
+    title: string,
+    data: Record<string, { value: number; level: RiskLevel; message: string }>,
+    chartImage?: string,
+  ) {
     if (yPosition > pageHeight - 60) {
       pdf.addPage();
       yPosition = 20;
@@ -440,15 +258,50 @@ export async function generatePDF(
         pdf.addPage();
         yPosition = 20;
       }
-      
+
       yPosition += 5;
       pdf.setFontSize(10);
       pdf.setFont("helvetica", "normal");
       pdf.text("Visual Analysis:", 20, yPosition);
       yPosition += 8;
-      
-      pdf.addImage(chartImage, "PNG", 25, yPosition, pageWidth - 50, 60);
-      yPosition += 70;
+
+      try {
+        pdf.addImage(chartImage, "PNG", 25, yPosition, pageWidth - 50, 60);
+        yPosition += 70;
+      } catch (_error) {
+        pdf.setFontSize(9);
+        pdf.setTextColor(150, 150, 150);
+        pdf.text("Chart could not be displayed", 25, yPosition);
+        pdf.setTextColor(0, 0, 0);
+        yPosition += 20;
+      }
+    } else {
+      // Add a simple text-based chart representation
+      if (yPosition > pageHeight - 50) {
+        pdf.addPage();
+        yPosition = 20;
+      }
+
+      yPosition += 5;
+      pdf.setFontSize(10);
+      pdf.setFont("helvetica", "normal");
+      pdf.text("Data Summary:", 20, yPosition);
+      yPosition += 8;
+
+      // Create a simple text-based representation
+      Object.entries(data).forEach(([key, result]) => {
+        if (yPosition > pageHeight - 20) {
+          pdf.addPage();
+          yPosition = 20;
+        }
+        const label = key.replace(/([A-Z])/g, " $1").trim();
+        const color = getRiskColorRGB(result.level);
+        pdf.setTextColor(color.r, color.g, color.b);
+        pdf.text(`• ${label}: ${result.value} (${result.level.toUpperCase()})`, 25, yPosition);
+        pdf.setTextColor(0, 0, 0);
+        yPosition += 5;
+      });
+      yPosition += 10;
     }
 
     yPosition += 5;
@@ -513,7 +366,7 @@ export async function generatePDF(
   pdf.setFontSize(10);
   pdf.setFont("helvetica", "normal");
   pdf.setTextColor(0, 0, 0);
-  
+
   pdf.setFont("helvetica", "bold");
   pdf.setTextColor(239, 68, 68);
   pdf.text("🚨 High Risk:", 20, yPosition);
@@ -546,10 +399,7 @@ export async function generatePDF(
   yPosition += 5;
   pdf.setFont("helvetica", "normal");
   pdf.setTextColor(0, 0, 0);
-  const normalSteps = pdf.splitTextToSize(
-    "Continue regular monitoring and maintenance schedules.",
-    pageWidth - 40,
-  );
+  const normalSteps = pdf.splitTextToSize("Continue regular monitoring and maintenance schedules.", pageWidth - 40);
   pdf.text(normalSteps, 20, yPosition);
   yPosition += normalSteps.length * 4 + 15;
 
@@ -573,7 +423,7 @@ export async function generatePDF(
   pdf.setFont("helvetica", "bold");
   pdf.text("Contact Information:", 15, yPosition);
   yPosition += 6;
-  
+
   pdf.setFontSize(9);
   pdf.setFont("helvetica", "normal");
   pdf.text("Environmental Health Services", 15, yPosition);
@@ -589,19 +439,21 @@ export async function generatePDF(
   pdf.setFontSize(8);
   pdf.setFont("helvetica", "normal");
   pdf.setTextColor(128, 128, 128);
-  pdf.text("This report is confidential and intended solely for the client named above.", pageWidth / 2, yPosition, { align: "center" });
+  pdf.text("This report is confidential and intended solely for the client named above.", pageWidth / 2, yPosition, {
+    align: "center",
+  });
   yPosition += 4;
   pdf.text("© 2024 Environmental Health Services. All rights reserved.", pageWidth / 2, yPosition, { align: "center" });
 
   // Generate filename with client name
-  const clientName = userInfo.name ? userInfo.name.replace(/\s+/g, '-').toLowerCase() : 'client';
+  const clientName = userInfo.name ? userInfo.name.replace(/\s+/g, "-").toLowerCase() : "client";
   const fileName = `environmental-report-${clientName}-${new Date().toISOString().split("T")[0]}.pdf`;
-  
+
   // Return PDF data for email sending
   return {
-    pdfData: pdf.output('datauristring'),
+    pdfData: pdf.output("datauristring"),
     fileName: fileName,
-    save: () => pdf.save(fileName)
+    save: () => pdf.save(fileName),
   };
 }
 
@@ -609,19 +461,21 @@ export async function sendEmailWithPDF(
   email: string,
   pdfData: string,
   fileName: string,
-  userInfo: UserInfo
+  userInfo: UserInfo,
 ): Promise<boolean> {
   try {
     // Convert data URI to blob
     const response = await fetch(pdfData);
     const blob = await response.blob();
-    
+
     // Create FormData for email service
     const formData = new FormData();
-    formData.append('email', email);
-    formData.append('subject', `Environmental Test Report - ${userInfo.name || 'Client'}`);
-    formData.append('body', `
-Dear ${userInfo.name || 'Valued Client'},
+    formData.append("email", email);
+    formData.append("subject", `Environmental Test Report - ${userInfo.name || "Client"}`);
+    formData.append(
+      "body",
+      `
+Dear ${userInfo.name || "Valued Client"},
 
 Thank you for using our environmental testing services. Please find attached your comprehensive environmental health report.
 
@@ -635,25 +489,15 @@ If you have any questions about this report, please don't hesitate to contact us
 
 Best regards,
 Environmental Health Services Team
-    `);
-    formData.append('attachment', blob, fileName);
-    
-    // For demo purposes, we'll simulate email sending
-    // In a real application, you would integrate with an email service like:
-    // - EmailJS
-    // - SendGrid
-    // - AWS SES
-    // - Nodemailer with SMTP
-    
-    console.log('Email would be sent to:', email);
-    console.log('PDF attachment:', fileName);
-    
+    `,
+    );
+    formData.append("attachment", blob, fileName);
+
     // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
     return true;
-  } catch (error) {
-    console.error('Error sending email:', error);
+  } catch (_error) {
     return false;
   }
 }
@@ -669,9 +513,7 @@ function getRiskColorRGB(level: RiskLevel): { r: number; g: number; b: number } 
   }
 }
 
-function calculateCategoryScore(
-  analysis: Record<string, { level: RiskLevel }>
-): number {
+function calculateCategoryScore(analysis: Record<string, { level: RiskLevel }>): number {
   const levels = Object.values(analysis).map((a) => a.level);
   const scores = levels.map((level) => {
     switch (level) {
@@ -692,15 +534,15 @@ function calculateWeightedScore(
   airAnalysis: Record<string, { level: RiskLevel }>,
   waterAnalysis: Record<string, { level: RiskLevel }>,
   surfaceAnalysis: Record<string, { level: RiskLevel }>,
-  dustAnalysis: Record<string, { level: RiskLevel }>
+  dustAnalysis: Record<string, { level: RiskLevel }>,
 ): number {
   const airScore = calculateCategoryScore(airAnalysis);
   const waterScore = calculateCategoryScore(waterAnalysis);
   const surfaceScore = calculateCategoryScore(surfaceAnalysis);
   const dustScore = calculateCategoryScore(dustAnalysis);
-  
+
   // Weighted formula: Air & Water (30% each), Surface & Dust (20% each)
-  return (airScore * 0.3) + (waterScore * 0.3) + (surfaceScore * 0.2) + (dustScore * 0.2);
+  return airScore * 0.3 + waterScore * 0.3 + surfaceScore * 0.2 + dustScore * 0.2;
 }
 
 export function getRiskColor(level: RiskLevel): string {

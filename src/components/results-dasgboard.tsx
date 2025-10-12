@@ -1,4 +1,4 @@
-import { Download, RotateCcw, User, Mail, MapPin, Phone } from "lucide-react";
+import { Download, Mail, MapPin, Phone, RotateCcw, User } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 import {
   Bar,
@@ -11,6 +11,7 @@ import {
   YAxis,
 } from "recharts";
 import { toast } from "sonner";
+import { DownloadDialog } from "@/components/download-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,7 +26,6 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { DownloadDialog } from "@/components/download-dialog";
 import {
   analyzeAirQuality,
   analyzeDustQuality,
@@ -34,7 +34,7 @@ import {
   getRiskBadgeClass,
   type RiskLevel,
 } from "@/lib/analysis";
-import { generatePDF, sendEmailWithPDF } from "@/lib/pdf-export";
+import { generatePDF } from "@/lib/pdf-export";
 import { useTestStore } from "@/lib/store";
 import Navbar from "./landing/navbar";
 
@@ -69,7 +69,6 @@ export function ResultsDashboard() {
         return "#6b7280"; // Gray
     }
   };
-  
 
   const airChartData = [
     {
@@ -78,7 +77,7 @@ export function ResultsDashboard() {
       level: airAnalysis.carbonDioxide?.level,
       fill: getRiskColor(airAnalysis.carbonDioxide?.level || "normal"),
       threshold: "≤1000 ppm",
-      reference: "EPA indoor guideline"
+      reference: "EPA indoor guideline",
     },
     {
       name: "CO",
@@ -86,7 +85,7 @@ export function ResultsDashboard() {
       level: airAnalysis.carbonMonoxide?.level,
       fill: getRiskColor(airAnalysis.carbonMonoxide?.level || "normal"),
       threshold: "≤9 ppm",
-      reference: "EPA indoor CO guideline"
+      reference: "EPA indoor CO guideline",
     },
     {
       name: "PM 2.5",
@@ -94,7 +93,7 @@ export function ResultsDashboard() {
       level: airAnalysis.pm25?.level,
       fill: getRiskColor(airAnalysis.pm25?.level || "normal"),
       threshold: "≤12 µg/m³",
-      reference: "EPA daily standard"
+      reference: "EPA daily standard",
     },
     {
       name: "RH",
@@ -102,7 +101,7 @@ export function ResultsDashboard() {
       level: airAnalysis.relativeHumidity?.level,
       fill: getRiskColor(airAnalysis.relativeHumidity?.level || "normal"),
       threshold: "40-55%",
-      reference: "Optimal range"
+      reference: "Optimal range",
     },
   ];
 
@@ -113,7 +112,7 @@ export function ResultsDashboard() {
       level: waterAnalysis.lead?.level,
       fill: getRiskColor(waterAnalysis.lead?.level || "normal"),
       mcl: "15 ppb",
-      reference: "EPA MCL"
+      reference: "EPA MCL",
     },
     {
       name: "Arsenic",
@@ -121,7 +120,7 @@ export function ResultsDashboard() {
       level: waterAnalysis.arsenic?.level,
       fill: getRiskColor(waterAnalysis.arsenic?.level || "normal"),
       mcl: "10 ppb",
-      reference: "EPA MCL"
+      reference: "EPA MCL",
     },
     {
       name: "PFAS",
@@ -129,7 +128,7 @@ export function ResultsDashboard() {
       level: waterAnalysis.pfas?.level,
       fill: getRiskColor(waterAnalysis.pfas?.level || "normal"),
       mcl: "4 ppt",
-      reference: "EPA MCL"
+      reference: "EPA MCL",
     },
   ];
 
@@ -140,7 +139,7 @@ export function ResultsDashboard() {
       level: surfaceAnalysis.leadPaintXRF?.level,
       fill: getRiskColor(surfaceAnalysis.leadPaintXRF?.level || "normal"),
       threshold: "≥0.5 mg/cm²",
-      reference: "NYC Local Law 31"
+      reference: "NYC Local Law 31",
     },
     {
       name: "Mold",
@@ -148,7 +147,7 @@ export function ResultsDashboard() {
       level: surfaceAnalysis.surfaceMold?.level,
       fill: getRiskColor(surfaceAnalysis.surfaceMold?.level || "normal"),
       threshold: ">500 CFU/cm²",
-      reference: "Threshold for concern"
+      reference: "Threshold for concern",
     },
   ];
 
@@ -160,7 +159,7 @@ export function ResultsDashboard() {
       fill: getRiskColor(dustAnalysis.floorDust?.level || "normal"),
       surfaceType: "Floor",
       threshold: "<10 µg/ft²",
-      reference: "EPA Clearance Standard"
+      reference: "EPA Clearance Standard",
     },
     {
       name: "Window Sill",
@@ -169,7 +168,7 @@ export function ResultsDashboard() {
       fill: getRiskColor(dustAnalysis.windowSill?.level || "normal"),
       surfaceType: "Sill",
       threshold: "<100 µg/ft²",
-      reference: "EPA Clearance Standard"
+      reference: "EPA Clearance Standard",
     },
     {
       name: "Window Trough",
@@ -178,7 +177,7 @@ export function ResultsDashboard() {
       fill: getRiskColor(dustAnalysis.windowTrough?.level || "normal"),
       surfaceType: "Trough",
       threshold: "<400 µg/ft²",
-      reference: "EPA Clearance Standard"
+      reference: "EPA Clearance Standard",
     },
   ];
 
@@ -211,79 +210,18 @@ export function ResultsDashboard() {
     },
   ];
 
-  const captureChartAsImage = useCallback(
-    (ref: React.RefObject<HTMLDivElement>): Promise<string> => {
-      return new Promise((resolve) => {
-        if (!ref.current) {
-          resolve("");
-          return;
-        }
-
-        // Use html2canvas to capture the chart
-        import("html2canvas")
-          .then((html2canvas) => {
-            html2canvas
-              .default(ref.current!, {
-                backgroundColor: "#ffffff",
-                scale: 2,
-                useCORS: true,
-              })
-              .then((canvas) => {
-                const imageData = canvas.toDataURL("image/png");
-                resolve(imageData);
-              })
-              .catch(() => {
-                resolve("");
-              });
-          })
-          .catch(() => {
-            resolve("");
-          });
-      });
-    },
-    []
-  );
-
   const generatePDFData = useCallback(async () => {
-    // Capture all chart images
-    const [airChart, waterChart, surfaceChart, dustChart, summaryChart] =
-      await Promise.all([
-        //@ts-ignore
-        captureChartAsImage(airChartRef),
-        //@ts-ignore
-        captureChartAsImage(waterChartRef),
-        //@ts-ignore
-        captureChartAsImage(surfaceChartRef),
-        //@ts-ignore
-        captureChartAsImage(dustChartRef),
-        //@ts-ignore
-        captureChartAsImage(summaryChartRef),
-      ]);
-
-    const chartImages = {
-      airChart,
-      waterChart,
-      surfaceChart,
-      dustChart,
-      summaryChart,
-    };
+    // Add a small delay to ensure charts are fully rendered
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
     return generatePDF(
       airAnalysis,
       waterAnalysis,
       surfaceAnalysis,
       dustAnalysis,
-      userInfo,
-      chartImages
+      userInfo
     );
-  }, [
-    airAnalysis,
-    waterAnalysis,
-    surfaceAnalysis,
-    dustAnalysis,
-    userInfo,
-    captureChartAsImage,
-  ]);
+  }, [airAnalysis, waterAnalysis, surfaceAnalysis, dustAnalysis, userInfo]);
 
   const handleSimpleDownload = useCallback(async () => {
     setIsGeneratingPDF(true);
@@ -297,34 +235,6 @@ export function ResultsDashboard() {
       setIsGeneratingPDF(false);
     }
   }, [generatePDFData]);
-
-  const handleEmailDownload = useCallback(async (email: string) => {
-    setIsGeneratingPDF(true);
-    try {
-      const pdfResult = await generatePDFData();
-      
-      // Send email with PDF attachment
-      const emailSent = await sendEmailWithPDF(
-        email,
-        pdfResult.pdfData,
-        pdfResult.fileName,
-        userInfo
-      );
-
-      if (emailSent) {
-        // Also download the PDF locally
-        pdfResult.save();
-        toast.success(`PDF sent to ${email} and downloaded successfully!`);
-      } else {
-        toast.error("Failed to send email. PDF downloaded instead.");
-        pdfResult.save();
-      }
-    } catch (_error) {
-      toast.error("Failed to send email. Please try again.");
-    } finally {
-      setIsGeneratingPDF(false);
-    }
-  }, [generatePDFData, userInfo]);
 
   const handleDownloadClick = () => {
     setShowDownloadDialog(true);
@@ -340,10 +250,10 @@ export function ResultsDashboard() {
       <div className="mx-auto max-w-7xl pt-16">
         <header className="mb-8 flex items-start justify-between">
           <div className="flex flex-col gap-5">
-            <div className="flex items-center justify-center gap-4 ">
-              <img 
-                src="/Toxin.jpg" 
-                alt="Toxin Testers Logo" 
+            <div className="flex items-center justify-center gap-4">
+              <img
+                src="/Toxin.jpg"
+                alt="Toxin Testers Logo"
                 className="h-12 w-auto"
               />
               <div>
@@ -355,34 +265,53 @@ export function ResultsDashboard() {
                 </p>
               </div>
             </div>
-            
+
             {/* Report Header Block */}
-            <div className="bg-muted/30 rounded-lg p-4 space-y-2 text-sm">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            <div className="space-y-2 rounded-lg bg-muted/30 p-4 text-sm">
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
                 <div>
                   <span className="font-medium text-foreground">Property:</span>
-                  <span className="text-muted-foreground ml-2">{userInfo.address || "Not specified"}</span>
+                  <span className="ml-2 text-muted-foreground">
+                    {userInfo.address || "Not specified"}
+                  </span>
                 </div>
                 <div>
-                  <span className="font-medium text-foreground">Inspection Date:</span>
-                  <span className="text-muted-foreground ml-2">{userInfo.inspectionDate ? new Date(userInfo.inspectionDate).toLocaleDateString('en-US', { 
-                    year: 'numeric', 
-                    month: 'short'
-                  }) : new Date().toLocaleDateString('en-US', { 
-                    year: 'numeric', 
-                    month: 'short', 
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}</span>
+                  <span className="font-medium text-foreground">
+                    Inspection Date:
+                  </span>
+                  <span className="ml-2 text-muted-foreground">
+                    {userInfo.inspectionDate
+                      ? new Date(userInfo.inspectionDate).toLocaleDateString(
+                          "en-US",
+                          {
+                            year: "numeric",
+                            month: "short",
+                          }
+                        )
+                      : new Date().toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                  </span>
                 </div>
                 <div>
-                  <span className="font-medium text-foreground">Inspector:</span>
-                  <span className="text-muted-foreground ml-2">{userInfo.inspector || "M. Eckstein"}</span>
+                  <span className="font-medium text-foreground">
+                    Inspector:
+                  </span>
+                  <span className="ml-2 text-muted-foreground">
+                    {userInfo.inspector || "M. Eckstein"}
+                  </span>
                 </div>
                 <div>
-                  <span className="font-medium text-foreground">Report ID:</span>
-                  <span className="text-muted-foreground ml-2">TT-2025-{Math.floor(Math.random() * 9000) + 1000}</span>
+                  <span className="font-medium text-foreground">
+                    Report ID:
+                  </span>
+                  <span className="ml-2 text-muted-foreground">
+                    TT-2025-{Math.floor(Math.random() * 9000) + 1000}
+                  </span>
                 </div>
               </div>
             </div>
@@ -396,14 +325,14 @@ export function ResultsDashboard() {
               <RotateCcw className="h-4 w-4" />
               New Test
             </Button>
-             <Button
-               onClick={handleDownloadClick}
-               disabled={isGeneratingPDF}
-               className="gap-2"
-             >
-               <Download className="h-4 w-4" />
-               {isGeneratingPDF ? "Generating..." : "Download PDF"}
-             </Button>
+            <Button
+              onClick={handleDownloadClick}
+              disabled={isGeneratingPDF}
+              className="gap-2"
+            >
+              <Download className="h-4 w-4" />
+              {isGeneratingPDF ? "Generating..." : "Download PDF"}
+            </Button>
           </div>
         </header>
 
@@ -421,7 +350,7 @@ export function ResultsDashboard() {
                 <div className="flex items-center gap-3">
                   <User className="h-4 w-4 text-muted-foreground" />
                   <div>
-                    <p className="text-sm font-medium text-foreground">Name</p>
+                    <p className="font-medium text-foreground text-sm">Name</p>
                     <p className="text-muted-foreground text-sm">
                       {userInfo.name}
                     </p>
@@ -430,7 +359,7 @@ export function ResultsDashboard() {
                 <div className="flex items-center gap-3">
                   <Mail className="h-4 w-4 text-muted-foreground" />
                   <div>
-                    <p className="text-sm font-medium text-foreground">Email</p>
+                    <p className="font-medium text-foreground text-sm">Email</p>
                     <p className="text-muted-foreground text-sm">
                       {userInfo.email}
                     </p>
@@ -439,7 +368,7 @@ export function ResultsDashboard() {
                 <div className="flex items-center gap-3">
                   <MapPin className="h-4 w-4 text-muted-foreground" />
                   <div>
-                    <p className="text-sm font-medium text-foreground">
+                    <p className="font-medium text-foreground text-sm">
                       Address
                     </p>
                     <p className="text-muted-foreground text-sm">
@@ -450,7 +379,7 @@ export function ResultsDashboard() {
                 <div className="flex items-center gap-3">
                   <Phone className="h-4 w-4 text-muted-foreground" />
                   <div>
-                    <p className="text-sm font-medium text-foreground">Phone</p>
+                    <p className="font-medium text-foreground text-sm">Phone</p>
                     <p className="text-muted-foreground text-sm">
                       {userInfo.phoneNumber}
                     </p>
@@ -482,29 +411,34 @@ export function ResultsDashboard() {
                   }}
                   className="h-[300px]"
                 >
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={airChartData}>
-                        <CartesianGrid
-                          strokeDasharray="3 3"
-                          stroke="hsl(var(--primary))"
-                        />
-                        <XAxis dataKey="name" stroke="hsl(var(--primary))" />
-                        <YAxis stroke="hsl(var(--primary))" />
-                        <ChartTooltip content={<ChartTooltipContent />} />
-                        <Bar
-                          dataKey="value"
-                          radius={[4, 4, 0, 0]}
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={airChartData}>
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        stroke="hsl(var(--primary))"
+                      />
+                      <XAxis dataKey="name" stroke="hsl(var(--primary))" />
+                      <YAxis stroke="hsl(var(--primary))" />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Bar dataKey="value" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
                 </ChartContainer>
               </div>
               <div className="mt-4 space-y-2">
                 {Object.entries(airAnalysis).map(([key, result]) => {
-                  const chartItem = airChartData.find(item => 
-                    item.name === key.replace(/([A-Z])/g, " $1").trim().replace('Carbon Dioxide', 'CO₂').replace('Carbon Monoxide', 'CO').replace('PM 2.5', 'PM 2.5').replace('Relative Humidity', 'RH')
+                  const chartItem = airChartData.find(
+                    (item) =>
+                      item.name ===
+                      key
+                        .replace(/([A-Z])/g, " $1")
+                        .trim()
+                        .replace("Carbon Dioxide", "CO₂")
+                        .replace("Carbon Monoxide", "CO")
+                        .replace("PM 2.5", "PM 2.5")
+                        .replace("Relative Humidity", "RH")
                   );
-                  
+
                   return (
                     <div
                       key={key}
@@ -515,7 +449,7 @@ export function ResultsDashboard() {
                           {key.replace(/([A-Z])/g, " $1").trim()}
                         </span>
                         {chartItem && (
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-muted-foreground text-xs">
                             ({chartItem.threshold})
                           </span>
                         )}
@@ -555,29 +489,31 @@ export function ResultsDashboard() {
                   }}
                   className="h-[300px]"
                 >
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={waterChartData}>
-                        <CartesianGrid
-                          strokeDasharray="3 3"
-                          stroke="hsl(var(--primary))"
-                        />
-                        <XAxis dataKey="name" stroke="hsl(var(--primary))" />
-                        <YAxis stroke="hsl(var(--primary))" />
-                        <ChartTooltip content={<ChartTooltipContent />} />
-                        <Bar
-                          dataKey="value"
-                          radius={[4, 4, 0, 0]}
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={waterChartData}>
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        stroke="hsl(var(--primary))"
+                      />
+                      <XAxis dataKey="name" stroke="hsl(var(--primary))" />
+                      <YAxis stroke="hsl(var(--primary))" />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Bar dataKey="value" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
                 </ChartContainer>
               </div>
               <div className="mt-4 space-y-2">
                 {Object.entries(waterAnalysis).map(([key, result]) => {
-                  const chartItem = waterChartData.find(item => 
-                    item.name.toLowerCase() === key.replace(/([A-Z])/g, " $1").trim().toLowerCase()
+                  const chartItem = waterChartData.find(
+                    (item) =>
+                      item.name.toLowerCase() ===
+                      key
+                        .replace(/([A-Z])/g, " $1")
+                        .trim()
+                        .toLowerCase()
                   );
-                  
+
                   return (
                     <div
                       key={key}
@@ -588,7 +524,7 @@ export function ResultsDashboard() {
                           {key.replace(/([A-Z])/g, " $1").trim()}
                         </span>
                         {chartItem && (
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-muted-foreground text-xs">
                             MCL: {chartItem.mcl}
                           </span>
                         )}
@@ -605,12 +541,13 @@ export function ResultsDashboard() {
                   );
                 })}
               </div>
-              
+
               {/* EPA Compliance Statement */}
-              <div className="mt-4 p-3 bg-primary/10 border border-blue-200 rounded-lg">
-                <p className="text-sm text-blue-800 dark:text-blue-300">
-                  <strong>EPA Compliance:</strong> Lead and Arsenic exceed safe limits established by EPA MCLs (40 CFR 141). 
-                  Immediate corrective action is advised.
+              <div className="mt-4 rounded-lg border border-blue-200 bg-primary/10 p-3">
+                <p className="text-blue-800 text-sm dark:text-blue-300">
+                  <strong>EPA Compliance:</strong> Lead and Arsenic exceed safe
+                  limits established by EPA MCLs (40 CFR 141). Immediate
+                  corrective action is advised.
                 </p>
               </div>
             </CardContent>
@@ -636,32 +573,35 @@ export function ResultsDashboard() {
                   }}
                   className="h-[300px]"
                 >
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={surfaceChartData}>
-                        <CartesianGrid
-                          strokeDasharray="3 3"
-                          stroke="hsl(var(--border))"
-                        />
-                        <XAxis
-                          dataKey="name"
-                          stroke="hsl(var(--muted-foreground))"
-                        />
-                        <YAxis stroke="hsl(var(--muted-foreground))" />
-                        <ChartTooltip content={<ChartTooltipContent />} />
-                        <Bar
-                          dataKey="value"
-                          radius={[4, 4, 0, 0]}
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={surfaceChartData}>
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        stroke="hsl(var(--border))"
+                      />
+                      <XAxis
+                        dataKey="name"
+                        stroke="hsl(var(--muted-foreground))"
+                      />
+                      <YAxis stroke="hsl(var(--muted-foreground))" />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Bar dataKey="value" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
                 </ChartContainer>
               </div>
               <div className="mt-4 space-y-2">
                 {Object.entries(surfaceAnalysis).map(([key, result]) => {
-                  const chartItem = surfaceChartData.find(item => 
-                    item.name.toLowerCase().replace(/\s+/g, '') === key.replace(/([A-Z])/g, " $1").trim().toLowerCase().replace(/\s+/g, '')
+                  const chartItem = surfaceChartData.find(
+                    (item) =>
+                      item.name.toLowerCase().replace(/\s+/g, "") ===
+                      key
+                        .replace(/([A-Z])/g, " $1")
+                        .trim()
+                        .toLowerCase()
+                        .replace(/\s+/g, "")
                   );
-                  
+
                   return (
                     <div
                       key={key}
@@ -672,7 +612,7 @@ export function ResultsDashboard() {
                           {key.replace(/([A-Z])/g, " $1").trim()}
                         </span>
                         {chartItem && (
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-muted-foreground text-xs">
                             {chartItem.reference}: {chartItem.threshold}
                           </span>
                         )}
@@ -689,25 +629,37 @@ export function ResultsDashboard() {
                   );
                 })}
               </div>
-              
+
               {/* Lead Paint Thermometer Visualization */}
               {surfaceAnalysis.leadPaintXRF && (
-                <div className="mt-4 p-4 bg-muted rounded-lg">
-                  <h4 className="font-medium text-foreground mb-3">Lead Paint Levels (Thermometer Scale)</h4>
+                <div className="mt-4 rounded-lg bg-muted p-4">
+                  <h4 className="mb-3 font-medium text-foreground">
+                    Lead Paint Levels (Thermometer Scale)
+                  </h4>
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-foreground">Current Reading: {surfaceAnalysis.leadPaintXRF.value} mg/cm²</span>
+                      <span className="text-foreground text-sm">
+                        Current Reading: {surfaceAnalysis.leadPaintXRF.value}{" "}
+                        mg/cm²
+                      </span>
                       <div className="flex items-center gap-2">
-                        <div className="w-32 h-4 bg-gradient-to-r from-green-500 via-yellow-500 to-red-500 rounded-full relative">
-                          <div 
-                            className="absolute top-0 h-4 w-1 bg-black rounded-full"
-                            style={{ left: `${Math.min((surfaceAnalysis.leadPaintXRF.value / 10) * 100, 100)}%` }}
+                        <div className="relative h-4 w-32 rounded-full bg-gradient-to-r from-green-500 via-yellow-500 to-red-500">
+                          <div
+                            className="absolute top-0 h-4 w-1 rounded-full bg-black"
+                            style={{
+                              left: `${Math.min(
+                                (surfaceAnalysis.leadPaintXRF.value / 10) * 100,
+                                100
+                              )}%`,
+                            }}
                           />
                         </div>
-                        <span className="text-xs text-muted-foreground">0-10 mg/cm²</span>
+                        <span className="text-muted-foreground text-xs">
+                          0-10 mg/cm²
+                        </span>
                       </div>
                     </div>
-                    <div className="flex justify-between text-xs text-muted-foreground">
+                    <div className="flex justify-between text-muted-foreground text-xs">
                       <span>🟢 Safe (0-0.1)</span>
                       <span>🟡 Caution (0.2-0.4)</span>
                       <span>🔴 Hazard (≥0.5)</span>
@@ -751,36 +703,39 @@ export function ResultsDashboard() {
                   }}
                   className="h-[300px]"
                 >
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={dustChartData}>
-                        <CartesianGrid
-                          strokeDasharray="3 3"
-                          stroke="hsl(var(--border))"
-                        />
-                        <XAxis
-                          dataKey="name"
-                          stroke="hsl(var(--muted-foreground))"
-                        />
-                        <YAxis stroke="hsl(var(--muted-foreground))" />
-                        <ChartTooltip content={<ChartTooltipContent />} />
-                        <Bar
-                          dataKey="value"
-                          radius={[4, 4, 0, 0]}
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={dustChartData}>
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        stroke="hsl(var(--border))"
+                      />
+                      <XAxis
+                        dataKey="name"
+                        stroke="hsl(var(--muted-foreground))"
+                      />
+                      <YAxis stroke="hsl(var(--muted-foreground))" />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Bar dataKey="value" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
                 </ChartContainer>
               </div>
               <div className="mt-4 space-y-2">
                 {Object.entries(dustAnalysis).map(([key, result]) => {
-                  const chartItem = dustChartData.find(item => 
-                    item.name.toLowerCase().replace(/\s+/g, '') === key.replace(/([A-Z])/g, " $1").trim().toLowerCase().replace(/\s+/g, '')
+                  const chartItem = dustChartData.find(
+                    (item) =>
+                      item.name.toLowerCase().replace(/\s+/g, "") ===
+                      key
+                        .replace(/([A-Z])/g, " $1")
+                        .trim()
+                        .toLowerCase()
+                        .replace(/\s+/g, "")
                   );
-                  
+
                   const isPass = result.level === "normal";
                   const passFailIcon = isPass ? "🟢" : "🔴";
                   const passFailText = isPass ? "Pass" : "Fail";
-                  
+
                   return (
                     <div
                       key={key}
@@ -796,7 +751,7 @@ export function ResultsDashboard() {
                           </Badge>
                         )}
                         {chartItem && (
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-muted-foreground text-xs">
                             {chartItem.threshold}
                           </span>
                         )}
@@ -806,7 +761,9 @@ export function ResultsDashboard() {
                           {result.message}
                         </span>
                         <div className="flex items-center gap-2">
-                          <span className="text-sm">{passFailIcon} {passFailText}</span>
+                          <span className="text-sm">
+                            {passFailIcon} {passFailText}
+                          </span>
                           <Badge className={getRiskBadgeClass(result.level)}>
                             {result.level}
                           </Badge>
@@ -816,18 +773,20 @@ export function ResultsDashboard() {
                   );
                 })}
               </div>
-              
+
               {/* EPA Clearance Standards Summary */}
-              <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <div className="mt-4 rounded-lg border border-yellow-200 bg-yellow-50 p-3">
                 <p className="text-sm text-yellow-800">
-                  <strong>EPA Clearance Standards:</strong> Floor dust levels above 10 µg/ft² and window sill levels above 100 µg/ft² 
-                  exceed EPA clearance standards and require professional cleaning or abatement.
+                  <strong>EPA Clearance Standards:</strong> Floor dust levels
+                  above 10 µg/ft² and window sill levels above 100 µg/ft² exceed
+                  EPA clearance standards and require professional cleaning or
+                  abatement.
                 </p>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-border bg-card ">
+          <Card className="border-border bg-card">
             <CardHeader>
               <CardTitle className="text-foreground">
                 Overall Environmental Health Summary
@@ -838,18 +797,29 @@ export function ResultsDashboard() {
             </CardHeader>
             <CardContent>
               {/* Environmental Health Score */}
-              <div className="mb-6 p-4 bg-gradient-to-r rounded-lg border">
+              <div className="mb-6 rounded-lg border bg-gradient-to-r p-4">
                 <div className="text-center">
-                  <h3 className="text-2xl font-bold text-foreground mb-2">Environmental Health Score</h3>
-                  <div className="text-4xl font-bold text-blue-600 mb-2">
-                    {Math.round(calculateWeightedEnvironmentalScore(airAnalysis, waterAnalysis, surfaceAnalysis, dustAnalysis))}/100
+                  <h3 className="mb-2 font-bold text-2xl text-foreground">
+                    Environmental Health Score
+                  </h3>
+                  <div className="mb-2 font-bold text-4xl text-blue-600">
+                    {Math.round(
+                      calculateWeightedEnvironmentalScore(
+                        airAnalysis,
+                        waterAnalysis,
+                        surfaceAnalysis,
+                        dustAnalysis
+                      )
+                    )}
+                    /100
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    Weighted average: Air & Water (30% each), Surface & Dust (20% each)
+                  <p className="text-muted-foreground text-sm">
+                    Weighted average: Air & Water (30% each), Surface & Dust
+                    (20% each)
                   </p>
                 </div>
               </div>
-              
+
               <div ref={summaryChartRef}>
                 <ChartContainer
                   config={{
@@ -877,22 +847,32 @@ export function ResultsDashboard() {
                         innerRadius={60}
                         outerRadius={120}
                         stroke="hsl(var(--border))"
-                        label={({ name, value }) => `${name}: ${Math.round(value)}`}
+                        label={({ name, value }) =>
+                          `${name}: ${Math.round(value)}`
+                        }
                       />
                     </PieChart>
                   </ResponsiveContainer>
                 </ChartContainer>
               </div>
-              
+
               {/* Category Breakdown */}
-              <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-4">
                 {summaryData.map((item) => (
-                  <div key={item.category} className="text-center p-3 bg-muted/30 rounded-lg">
-                    <div className="text-sm font-medium text-foreground">{item.category}</div>
-                    <div className="text-lg font-bold" style={{ color: item.fill }}>
+                  <div
+                    key={item.category}
+                    className="rounded-lg bg-muted/30 p-3 text-center"
+                  >
+                    <div className="font-medium text-foreground text-sm">
+                      {item.category}
+                    </div>
+                    <div
+                      className="font-bold text-lg"
+                      style={{ color: item.fill }}
+                    >
                       {Math.round(item.score)}
                     </div>
-                    <div className="text-xs text-muted-foreground">/100</div>
+                    <div className="text-muted-foreground text-xs">/100</div>
                   </div>
                 ))}
               </div>
@@ -929,22 +909,34 @@ export function ResultsDashboard() {
                   icon="🚨"
                 />
               </div>
-              
+
               {/* Next Steps Section */}
-              <div className="mt-6 p-4 rounded-lg">
-                <h4 className="font-semibold text-blue-900 mb-3">Next Steps</h4>
-                <div className="space-y-2 text-sm light:text-blue-800">
+              <div className="mt-6 rounded-lg p-4">
+                <h4 className="mb-3 font-semibold text-blue-900">Next Steps</h4>
+                <div className="space-y-2 light:text-blue-800 text-sm">
                   <div className="flex items-start gap-2">
-                    <span className="text-red-500 font-bold">🚨 High Risk:</span>
-                    <span>You may want to consider contacting a certified abatement contractor.</span>
+                    <span className="font-bold text-red-500">
+                      🚨 High Risk:
+                    </span>
+                    <span>
+                      You may want to consider contacting a certified abatement
+                      contractor.
+                    </span>
                   </div>
                   <div className="flex items-start gap-2">
-                    <span className="text-yellow-600 font-bold">⚠️ Warning:</span>
-                    <span>Re-test in 3 months; ensure windows remain closed during test period.</span>
+                    <span className="font-bold text-yellow-600">
+                      ⚠️ Warning:
+                    </span>
+                    <span>
+                      Re-test in 3 months; ensure windows remain closed during
+                      test period.
+                    </span>
                   </div>
                   <div className="flex items-start gap-2">
-                    <span className="text-green-600 font-bold">✅ Normal:</span>
-                    <span>Continue regular monitoring and maintenance schedules.</span>
+                    <span className="font-bold text-green-600">✅ Normal:</span>
+                    <span>
+                      Continue regular monitoring and maintenance schedules.
+                    </span>
                   </div>
                 </div>
               </div>
@@ -957,7 +949,6 @@ export function ResultsDashboard() {
           open={showDownloadDialog}
           onOpenChange={setShowDownloadDialog}
           onSimpleDownload={handleSimpleDownload}
-          onEmailDownload={handleEmailDownload}
           isGeneratingPDF={isGeneratingPDF}
         />
       </div>
@@ -1031,5 +1022,7 @@ function calculateWeightedEnvironmentalScore(
   const surfaceScore = calculateCategoryScore(surfaceAnalysis);
   const dustScore = calculateCategoryScore(dustAnalysis);
   // Weighted formula: Air & Water (30% each), Surface & Dust (20% each)
-  return (airScore * 0.3) + (waterScore * 0.3) + (surfaceScore * 0.2) + (dustScore * 0.2);
+  return (
+    airScore * 0.3 + waterScore * 0.3 + surfaceScore * 0.2 + dustScore * 0.2
+  );
 }

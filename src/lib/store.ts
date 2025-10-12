@@ -95,12 +95,13 @@ export const useTestStore = create<TestStore>((set) => ({
     set((state) => ({
       userInfo: { ...state.userInfo, ...data },
     })),
-  resetData: () => set({ 
-    data: initialData, 
-    userInfo: initialUserInfo, 
-    currentStep: "user-info",
-    currentTab: "air", 
-    showResults: false 
-  }),
+  resetData: () =>
+    set({
+      data: initialData,
+      userInfo: initialUserInfo,
+      currentStep: "user-info",
+      currentTab: "air",
+      showResults: false,
+    }),
   setShowResults: (show) => set({ showResults: show }),
 }));

@@ -1,23 +1,11 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useTestStore } from "@/lib/store";
 
@@ -47,7 +35,7 @@ export function UserInfoForm({ onNext }: UserInfoFormProps) {
       email: userInfo.email,
       address: userInfo.address,
       phoneNumber: userInfo.phoneNumber,
-      inspectionDate: userInfo.inspectionDate || new Date().toISOString().split('T')[0],
+      inspectionDate: userInfo.inspectionDate || new Date().toISOString().split("T")[0],
       inspector: userInfo.inspector || "M. Eckstein",
     },
   });
@@ -57,23 +45,20 @@ export function UserInfoForm({ onNext }: UserInfoFormProps) {
     try {
       updateUserInfo(data);
       onNext();
-    } catch (error) {
-      console.error("Error saving user info:", error);
+    } catch (_error) {
+      toast.error("Something went wrong, Please try again!");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="mx-auto max-w-3xl p-6 py-auto h-full">
+    <div className="mx-auto h-full max-w-3xl p-6 py-auto">
       <Card className="border-border bg-card">
         <CardHeader>
-          <CardTitle className="text-foreground">
-            Client Information
-          </CardTitle>
+          <CardTitle className="text-foreground">Client Information</CardTitle>
           <CardDescription>
-            Please provide your client contact information to generate your
-            environmental test report.
+            Please provide your client contact information to generate your environmental test report.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -86,11 +71,7 @@ export function UserInfoForm({ onNext }: UserInfoFormProps) {
                   <FormItem>
                     <FormLabel className="text-foreground">Full Name</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder="Enter your full name"
-                        className="bg-background text-foreground"
-                        {...field}
-                      />
+                      <Input placeholder="Enter your full name" className="bg-background text-foreground" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -102,9 +83,7 @@ export function UserInfoForm({ onNext }: UserInfoFormProps) {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-foreground">
-                      Email Address
-                    </FormLabel>
+                    <FormLabel className="text-foreground">Email Address</FormLabel>
                     <FormControl>
                       <Input
                         type="email"
@@ -141,9 +120,7 @@ export function UserInfoForm({ onNext }: UserInfoFormProps) {
                 name="phoneNumber"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-foreground">
-                      Phone Number
-                    </FormLabel>
+                    <FormLabel className="text-foreground">Phone Number</FormLabel>
                     <FormControl>
                       <Input
                         type="tel"
@@ -162,15 +139,9 @@ export function UserInfoForm({ onNext }: UserInfoFormProps) {
                 name="inspectionDate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-foreground">
-                      Inspection Date
-                    </FormLabel>
+                    <FormLabel className="text-foreground">Inspection Date</FormLabel>
                     <FormControl>
-                      <Input
-                        type="date"
-                        className="bg-background text-foreground"
-                        {...field}
-                      />
+                      <Input type="date" className="bg-background text-foreground" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -182,15 +153,9 @@ export function UserInfoForm({ onNext }: UserInfoFormProps) {
                 name="inspector"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-foreground">
-                      Inspector Name
-                    </FormLabel>
+                    <FormLabel className="text-foreground">Inspector Name</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder="Enter inspector name"
-                        className="bg-background text-foreground"
-                        {...field}
-                      />
+                      <Input placeholder="Enter inspector name" className="bg-background text-foreground" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -198,11 +163,7 @@ export function UserInfoForm({ onNext }: UserInfoFormProps) {
               />
 
               <div className="flex justify-end">
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="min-w-32"
-                >
+                <Button type="submit" disabled={isSubmitting} className="min-w-32">
                   {isSubmitting ? "Saving..." : "Continue"}
                 </Button>
               </div>
