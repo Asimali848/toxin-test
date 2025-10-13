@@ -4,7 +4,7 @@ import { TabNavigation } from "@/components/tab-navigation";
 import { UserInfoForm } from "@/components/user-info-form";
 import { useTestStore } from "@/lib/store";
 import Navbar from "./components/landing/navbar";
-import { ResultsDashboard } from "./components/results-dasgboard";
+import { ResultsDashboard } from "./components/results-dashboard";
 import { SurfaceTestForm } from "./components/surface-text-form";
 import { WaterTestForm } from "./components/water-test-form";
 

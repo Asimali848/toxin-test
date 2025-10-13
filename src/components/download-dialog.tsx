@@ -145,18 +145,9 @@ interface DownloadDialogProps {
   onOpenChange: (open: boolean) => void;
   onSimpleDownload: () => void;
   isGeneratingPDF: boolean;
-  pdfData?: string; // optional base64 PDF if you want to send it
-  fileName?: string;
 }
 
-export function DownloadDialog({
-  open,
-  onOpenChange,
-  onSimpleDownload,
-  isGeneratingPDF,
-  pdfData,
-  fileName,
-}: DownloadDialogProps) {
+export function DownloadDialog({ open, onOpenChange, onSimpleDownload, isGeneratingPDF }: DownloadDialogProps) {
   const [email, setEmail] = useState("");
   const [isEmailValid, setIsEmailValid] = useState(false);
 
@@ -191,8 +182,7 @@ export function DownloadDialog({
           email,
           subject: "Your Environmental Test Report",
           message: "Please find attached your requested environmental test report.",
-          fileName: fileName || "report.pdf",
-          pdfData, // optional: if you want to send base64 data to n8n
+          fileName: "environmental-report.pdf",
         }),
       });
 
@@ -201,8 +191,7 @@ export function DownloadDialog({
       } else {
         toast.error("Failed to send email. Please try again.");
       }
-    } catch (error) {
-      console.error("Error sending email:", error);
+    } catch {
       toast.error("An error occurred while sending the email.");
     } finally {
       setEmail("");
@@ -218,9 +207,7 @@ export function DownloadDialog({
             <Download className="h-5 w-5" />
             Download Report
           </DialogTitle>
-          <DialogDescription>
-            Choose how you would like to receive your environmental test report.
-          </DialogDescription>
+          <DialogDescription>Choose how you would like to receive your environmental test report.</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -234,9 +221,7 @@ export function DownloadDialog({
               <Download className="h-5 w-5" />
               <div className="text-left">
                 <div className="font-medium">Simple Download</div>
-                <div className="text-muted-foreground text-sm">
-                  Download PDF directly to your device
-                </div>
+                <div className="text-muted-foreground text-sm">Download PDF directly to your device</div>
               </div>
             </Button>
 
@@ -250,9 +235,7 @@ export function DownloadDialog({
                 <Send className="h-5 w-5" />
                 <div className="text-left">
                   <div className="font-medium">Email + Download</div>
-                  <div className="text-muted-foreground text-sm">
-                    Send PDF to email and download
-                  </div>
+                  <div className="text-muted-foreground text-sm">Send PDF to email and download</div>
                 </div>
               </Button>
 
@@ -271,22 +254,14 @@ export function DownloadDialog({
                   />
                   <Mail className="mt-2 h-4 w-4 text-muted-foreground" />
                 </div>
-                {email && !isEmailValid && (
-                  <p className="text-red-500 text-sm">
-                    Please enter a valid email address
-                  </p>
-                )}
+                {email && !isEmailValid && <p className="text-red-500 text-sm">Please enter a valid email address</p>}
               </div>
             </div>
           </div>
         </div>
 
         <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={isGeneratingPDF}
-          >
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isGeneratingPDF}>
             Cancel
           </Button>
         </DialogFooter>

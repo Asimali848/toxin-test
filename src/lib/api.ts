@@ -1,31 +1,38 @@
+import type { AnalysisResult } from "./analysis";
+import type { UserInfo } from "./types";
+
+export interface SummaryDataItem {
+  category: string;
+  score: number;
+  fill: string;
+}
+
 export interface WebhookRequest {
   report_type: "environmental_report";
   report_data: {
-    userInfo: any;
-    airAnalysis: any;
-    waterAnalysis: any;
-    surfaceAnalysis: any;
-    dustAnalysis: any;
-    summaryData: any;
+    userInfo: UserInfo;
+    airAnalysis: Record<string, AnalysisResult>;
+    waterAnalysis: Record<string, AnalysisResult>;
+    surfaceAnalysis: Record<string, AnalysisResult>;
+    dustAnalysis: Record<string, AnalysisResult>;
+    summaryData: SummaryDataItem[];
   };
 }
 
 export interface WebhookResponse {
   success: boolean;
-  data?: any;
+  data?: unknown;
   error?: string;
 }
 
-export const callWebhook = async (
-  reportData: {
-    userInfo: any;
-    airAnalysis: any;
-    waterAnalysis: any;
-    surfaceAnalysis: any;
-    dustAnalysis: any;
-    summaryData: any;
-  }
-): Promise<WebhookResponse> => {
+export const callWebhook = async (reportData: {
+  userInfo: UserInfo;
+  airAnalysis: Record<string, AnalysisResult>;
+  waterAnalysis: Record<string, AnalysisResult>;
+  surfaceAnalysis: Record<string, AnalysisResult>;
+  dustAnalysis: Record<string, AnalysisResult>;
+  summaryData: SummaryDataItem[];
+}): Promise<WebhookResponse> => {
   const webhookUrl = import.meta.env.VITE_WEBHOOK_URL;
 
   if (!webhookUrl) {

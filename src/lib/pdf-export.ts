@@ -1,4 +1,3 @@
-
 import jsPDF from "jspdf";
 import type { RiskLevel } from "./analysis";
 import type { UserInfo } from "./types";
