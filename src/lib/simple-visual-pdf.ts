@@ -2,74 +2,8 @@ import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import type { UserInfo } from "./types";
 
-// Helper function to convert oklch/oklab colors by setting inline styles
-function convertOklchColors(element: HTMLElement): Map<HTMLElement, string> {
-  const originalStyles = new Map<HTMLElement, string>();
-  const allElements = [element, ...Array.from(element.querySelectorAll("*"))];
-
-  allElements.forEach((el) => {
-    const htmlEl = el as HTMLElement;
-    const computed = window.getComputedStyle(htmlEl);
-
-    // Store original inline style
-    originalStyles.set(htmlEl, htmlEl.getAttribute("style") || "");
-
-    // Force inline styles for all color properties to override oklch
-    const properties = [
-      "color",
-      "backgroundColor",
-      "borderColor",
-      "borderTopColor",
-      "borderRightColor",
-      "borderBottomColor",
-      "borderLeftColor",
-      "fill",
-      "stroke",
-    ];
-
-    properties.forEach((prop) => {
-      const value = computed.getPropertyValue(prop.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`));
-      if (value && (value.includes("oklch") || value.includes("oklab"))) {
-        // Extract RGB values from computed style
-        const rgb = value.match(/\d+(\.\d+)?/g);
-        if (rgb && rgb.length >= 3) {
-          const r = Math.round(Number.parseFloat(rgb[0]));
-          const g = Math.round(Number.parseFloat(rgb[1]));
-          const b = Math.round(Number.parseFloat(rgb[2]));
-          const a = rgb[3] ? Number.parseFloat(rgb[3]) : 1;
-
-          // Set as inline style with !important to override
-          if (a < 1) {
-            htmlEl.style.setProperty(
-              prop.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`),
-              `rgba(${r}, ${g}, ${b}, ${a})`,
-              "important",
-            );
-          } else {
-            htmlEl.style.setProperty(
-              prop.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`),
-              `rgb(${r}, ${g}, ${b})`,
-              "important",
-            );
-          }
-        }
-      }
-    });
-  });
-
-  return originalStyles;
-}
-
-// Helper function to restore original styles
-function restoreOriginalStyles(originalStyles: Map<HTMLElement, string>) {
-  originalStyles.forEach((originalStyle, element) => {
-    if (originalStyle) {
-      element.setAttribute("style", originalStyle);
-    } else {
-      element.removeAttribute("style");
-    }
-  });
-}
+// Intentionally removed live DOM mutation helpers. All style adjustments are applied only
+// to the cloned document inside html2canvas's onclone callback to avoid affecting the UI.
 
 export async function generateSimpleVisualPDF(
   dashboardElement: HTMLElement,
@@ -78,7 +12,6 @@ export async function generateSimpleVisualPDF(
   try {
     // Wait a bit for everything to render
     await new Promise((resolve) => setTimeout(resolve, 1000));
-    const originalStyles = convertOklchColors(dashboardElement);
 
     // Wait a bit for styles to apply
     await new Promise((resolve) => setTimeout(resolve, 100));
@@ -249,9 +182,6 @@ export async function generateSimpleVisualPDF(
         clonedDoc.head.appendChild(style);
       },
     });
-
-    // Restore original styles
-    restoreOriginalStyles(originalStyles);
 
     const imgData = canvas.toDataURL("image/jpeg", 0.8); // Use JPEG for smaller file size
 

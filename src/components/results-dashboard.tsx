@@ -17,8 +17,10 @@ import {
 } from "@/lib/analysis";
 import { generateSimpleVisualPDF } from "@/lib/simple-visual-pdf";
 import { useTestStore } from "@/lib/store";
+import { generatePDF } from "@/lib/pdf-export";
 import { generateVisualPDFWithCharts } from "@/lib/visual-pdf-export";
 import { AirQualityChart } from "./air-quality-chart";
+import html2canvas from "html2canvas";
 import Navbar from "./landing/navbar";
 
 export function ResultsDashboard() {
@@ -205,6 +207,89 @@ export function ResultsDashboard() {
     return generateVisualPDFWithCharts(dashboardRef.current, userInfo);
   }, [userInfo]);
 
+  const captureElement = async (el: HTMLElement | null): Promise<string | undefined> => {
+    if (!el) return undefined;
+    try {
+      const canvas = await html2canvas(el, {
+        scale: 2,
+        backgroundColor: "#ffffff",
+        logging: false,
+        useCORS: true,
+      });
+      return canvas.toDataURL("image/png", 1.0);
+    } catch {
+      return undefined;
+    }
+  };
+
+  // Prefer capturing the chart's SVG directly for reliability
+  const captureChartSvg = async (container: HTMLElement | null): Promise<string | undefined> => {
+    if (!container) return undefined;
+    const svg = container.querySelector("svg");
+    if (!svg) return undefined;
+    try {
+      // Clone the SVG to avoid mutating original
+      const clonedSvg = svg.cloneNode(true) as SVGSVGElement;
+      // Ensure xmlns is present
+      if (!clonedSvg.getAttribute("xmlns")) {
+        clonedSvg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+      }
+      // Compute export dimensions
+      const rect = (svg as SVGSVGElement).getBoundingClientRect();
+      const width = Math.max(1, Math.round(rect.width || Number(svg.getAttribute("width")) || 600));
+      const height = Math.max(1, Math.round(rect.height || Number(svg.getAttribute("height")) || 300));
+      clonedSvg.setAttribute("width", String(width));
+      clonedSvg.setAttribute("height", String(height));
+
+      const serializer = new XMLSerializer();
+      const svgString = serializer.serializeToString(clonedSvg);
+      const blob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      try {
+        const dataUrl: string = await new Promise((resolve, reject) => {
+          const img = new Image();
+          img.onload = () => {
+            try {
+              const canvas = document.createElement("canvas");
+              canvas.width = width * 2; // scale for sharper image
+              canvas.height = height * 2;
+              const ctx = canvas.getContext("2d");
+              if (!ctx) return reject(new Error("No canvas context"));
+              ctx.fillStyle = "#ffffff";
+              ctx.fillRect(0, 0, canvas.width, canvas.height);
+              ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+              resolve(canvas.toDataURL("image/png", 1.0));
+            } catch (e) {
+              reject(e);
+            }
+          };
+          img.onerror = () => reject(new Error("SVG to image load failed"));
+          img.src = url;
+        });
+        return dataUrl;
+      } finally {
+        URL.revokeObjectURL(url);
+      }
+    } catch {
+      return undefined;
+    }
+  };
+
+  const getChartImages = useCallback(async () => {
+    // small delay to ensure charts are painted
+    await new Promise((r) => setTimeout(r, 500));
+    // Try SVG capture first, then fall back to html2canvas per chart
+    const airChart = (await captureChartSvg(airChartRef.current)) || (await captureElement(airChartRef.current));
+    const waterChart =
+      (await captureChartSvg(waterChartRef.current)) || (await captureElement(waterChartRef.current));
+    const surfaceChart =
+      (await captureChartSvg(surfaceChartRef.current)) || (await captureElement(surfaceChartRef.current));
+    const dustChart = (await captureChartSvg(dustChartRef.current)) || (await captureElement(dustChartRef.current));
+    const summaryChart =
+      (await captureChartSvg(summaryChartRef.current)) || (await captureElement(summaryChartRef.current));
+    return { airChart, waterChart, surfaceChart, dustChart, summaryChart };
+  }, []);
+
   const handleSimpleDownload = useCallback(async () => {
     setIsGeneratingPDF(true);
     try {
@@ -218,7 +303,20 @@ export function ResultsDashboard() {
         pdfResult = await generateSimpleVisualPDF(dashboardRef.current, userInfo);
       } catch {
         // Fallback to complex approach
-        pdfResult = await generateVisualPDFData();
+        try {
+          pdfResult = await generateVisualPDFData();
+        } catch {
+          // Final fallback: build the text PDF but embed chart screenshots if available
+          const chartImages = await getChartImages();
+          const air = airAnalysis as any;
+          const water = waterAnalysis as any;
+          const surface = surfaceAnalysis as any;
+          const dust = dustAnalysis as any;
+          const basicPdf = await generatePDF(air, water, surface, dust, userInfo, chartImages);
+          basicPdf.save();
+          toast.success("PDF downloaded successfully!");
+          return;
+        }
       }
       pdfResult.save();
       toast.success("PDF downloaded successfully!");
@@ -227,7 +325,7 @@ export function ResultsDashboard() {
     } finally {
       setIsGeneratingPDF(false);
     }
-  }, [generateVisualPDFData, userInfo]);
+  }, [generateVisualPDFData, getChartImages, userInfo]);
 
   const handleDownloadClick = () => {
     setShowDownloadDialog(true);
