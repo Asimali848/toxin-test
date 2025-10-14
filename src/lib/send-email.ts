@@ -1,21 +1,25 @@
-// lib/sendEmail.ts
+import type { UserInfo } from "./types";
+
 export async function sendEmailWithPDF(
   email: string,
   pdfBlob: Blob,
   fileName: string,
-  userInfo: any
+  userInfo: UserInfo,
 ): Promise<boolean> {
   try {
     const formData = new FormData();
     formData.append("email", email);
     formData.append("subject", "Your Environmental Test Report");
-    formData.append("message", `
+    formData.append(
+      "message",
+      `
       Hello ${userInfo.name || "Client"},
       <br/><br/>
       Please find attached your Environmental Test Report.
       <br/><br/>
       Regards,<br/>Toxin Testers Team
-    `);
+    `,
+    );
     formData.append("attachment", pdfBlob, fileName);
 
     // Example API route — replace with your actual backend or n8n webhook URL
@@ -25,8 +29,7 @@ export async function sendEmailWithPDF(
     });
 
     return response.ok;
-  } catch (error) {
-    console.error("Email sending failed:", error);
+  } catch {
     return false;
   }
 }

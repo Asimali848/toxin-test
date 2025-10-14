@@ -23,7 +23,6 @@
 //     onOpenChange(false);
 //   };
 
-
 //   return (
 //     <Dialog open={open} onOpenChange={onOpenChange}>
 //       <DialogContent className="sm:max-w-md">
@@ -61,8 +60,6 @@
 //     </Dialog>
 //   );
 // }
-
-
 
 import { Download, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -108,9 +105,7 @@ export function DownloadDialog({
             <Download className="h-5 w-5" />
             Download Report
           </DialogTitle>
-          <DialogDescription>
-            Choose how you would like to receive your environmental test report.
-          </DialogDescription>
+          <DialogDescription>Choose how you would like to receive your environmental test report.</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -124,9 +119,7 @@ export function DownloadDialog({
             <Download className="h-5 w-5" />
             <div className="text-left">
               <div className="font-medium">Simple Download</div>
-              <div className="text-muted-foreground text-sm">
-                Download PDF directly to your device
-              </div>
+              <div className="text-muted-foreground text-sm">Download PDF directly to your device</div>
             </div>
           </Button>
 
@@ -140,19 +133,13 @@ export function DownloadDialog({
             <Mail className="h-5 w-5" />
             <div className="text-left">
               <div className="font-medium">Email Report</div>
-              <div className="text-muted-foreground text-sm">
-                Send PDF report to your email address
-              </div>
+              <div className="text-muted-foreground text-sm">Send PDF report to your email address</div>
             </div>
           </Button>
         </div>
 
         <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={isGeneratingPDF}
-          >
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isGeneratingPDF}>
             Cancel
           </Button>
         </DialogFooter>
