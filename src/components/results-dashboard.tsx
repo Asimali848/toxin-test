@@ -1,3 +1,4 @@
+import html2canvas from "html2canvas";
 import { Download, Mail, MapPin, Phone, RotateCcw, User } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, XAxis, YAxis } from "recharts";
@@ -15,12 +16,11 @@ import {
   getRiskBadgeClass,
   type RiskLevel,
 } from "@/lib/analysis";
+import { generatePDF } from "@/lib/pdf-export";
 import { generateSimpleVisualPDF } from "@/lib/simple-visual-pdf";
 import { useTestStore } from "@/lib/store";
-import { generatePDF } from "@/lib/pdf-export";
 import { generateVisualPDFWithCharts } from "@/lib/visual-pdf-export";
 import { AirQualityChart } from "./air-quality-chart";
-import html2canvas from "html2canvas";
 import Navbar from "./landing/navbar";
 
 export function ResultsDashboard() {
@@ -280,15 +280,14 @@ export function ResultsDashboard() {
     await new Promise((r) => setTimeout(r, 500));
     // Try SVG capture first, then fall back to html2canvas per chart
     const airChart = (await captureChartSvg(airChartRef.current)) || (await captureElement(airChartRef.current));
-    const waterChart =
-      (await captureChartSvg(waterChartRef.current)) || (await captureElement(waterChartRef.current));
+    const waterChart = (await captureChartSvg(waterChartRef.current)) || (await captureElement(waterChartRef.current));
     const surfaceChart =
       (await captureChartSvg(surfaceChartRef.current)) || (await captureElement(surfaceChartRef.current));
     const dustChart = (await captureChartSvg(dustChartRef.current)) || (await captureElement(dustChartRef.current));
     const summaryChart =
       (await captureChartSvg(summaryChartRef.current)) || (await captureElement(summaryChartRef.current));
     return { airChart, waterChart, surfaceChart, dustChart, summaryChart };
-  }, []);
+  }, [captureChartSvg, captureElement]);
 
   const handleSimpleDownload = useCallback(async () => {
     setIsGeneratingPDF(true);
@@ -325,7 +324,7 @@ export function ResultsDashboard() {
     } finally {
       setIsGeneratingPDF(false);
     }
-  }, [generateVisualPDFData, getChartImages, userInfo]);
+  }, [generateVisualPDFData, getChartImages, userInfo, airAnalysis, dustAnalysis, surfaceAnalysis, waterAnalysis]);
 
   const handleDownloadClick = () => {
     setShowDownloadDialog(true);

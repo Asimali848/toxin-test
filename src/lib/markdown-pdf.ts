@@ -100,5 +100,3 @@ export async function downloadMarkdownAsPDF(markdown: string, filename: string =
     throw new Error("Failed to convert markdown to PDF");
   }
 }
-
-
