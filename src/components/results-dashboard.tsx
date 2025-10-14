@@ -50,6 +50,7 @@ import { useTestStore } from "@/lib/store";
 import { generateVisualPDFWithCharts } from "@/lib/visual-pdf-export";
 import { AirQualityChart } from "./air-quality-chart";
 import Navbar from "./landing/navbar";
+import emailjs from "@emailjs/browser";
 
 export function ResultsDashboard() {
   const { data, userInfo, resetData } = useTestStore();
@@ -391,6 +392,47 @@ export function ResultsDashboard() {
     surfaceAnalysis,
     waterAnalysis,
   ]);
+
+  const handleEmailReport = async () => {
+    try {
+      setIsGeneratingPDF(true);
+
+      // Get the PDF blob
+      const res = await fetch("/api/report/download");
+      const blob = await res.blob();
+
+      // Convert blob to base64
+      const reader = new FileReader();
+      reader.readAsDataURL(blob);
+      reader.onloadend = async () => {
+        const base64PDF = reader.result as string;
+
+        const templateParams = {
+          to_email: userInfo.email,
+          to_name: userInfo.name,
+          message: "Your environmental test report is attached below.",
+          file: base64PDF, // base64-encoded PDF
+          file_name: "Environmental_Report.pdf",
+        };
+
+        const result = await emailjs.send(
+          "service_9w5trja",
+          "template_cn0jrpu",
+          templateParams,
+          "pWy_1lvvyxQ2tto4T"
+        );
+
+        if (result.status === 200) {
+          toast.success("Email sent successfully!");
+        }
+      };
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to send email");
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
 
   const handleDownloadClick = () => {
     setShowDownloadDialog(true);
@@ -1096,6 +1138,7 @@ export function ResultsDashboard() {
           open={showDownloadDialog}
           onOpenChange={setShowDownloadDialog}
           onSimpleDownload={handleSimpleDownload}
+          onEmailReport={handleEmailReport}
           isGeneratingPDF={isGeneratingPDF}
         />
       </div>
