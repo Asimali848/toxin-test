@@ -23,7 +23,7 @@ export async function sendEmailWithPDF(
     formData.append("attachment", pdfBlob, fileName);
 
     // Example API route — replace with your actual backend or n8n webhook URL
-    const response = await fetch("https://daku-maha.app.n8n.cloud/webhook/webhook-testing", {
+    const response = await fetch("https://scintia.app.n8n.cloud/webhook/91439925-955d-4b27-ba3f-300aec964cf8", {
       method: "POST",
       body: formData,
     });
@@ -82,6 +82,80 @@ export async function sendPdfAsMarkdownAttachment(
 
     return res.ok;
   } catch (_err) {
+    return false;
+  }
+}
+
+/**
+ * Send an arbitrary file (PDF) to a webhook as multipart/form-data.
+ * Additional fields can be provided via the `fields` object.
+ */
+export async function sendFileToWebhook(
+  webhookUrl: string,
+  fileBlob: Blob,
+  fileName: string,
+  fields?: Record<string, string>,
+): Promise<boolean> {
+  try {
+    const form = new FormData();
+    if (fields) {
+      Object.entries(fields).forEach(([k, v]) => form.append(k, v));
+    }
+    form.append("file", fileBlob, fileName);
+
+    const res = await fetch(webhookUrl, {
+      method: "POST",
+      body: form,
+    });
+
+    return res.ok;
+  } catch (err) {
+    console.error("sendFileToWebhook error", err);
+    return false;
+  }
+}
+
+/**
+ * Send a file to the webhook inside a JSON payload (base64-encoded).
+ * This is useful when the receiving webhook expects JSON instead of multipart.
+ */
+export async function sendFileAsJsonToWebhook(
+  webhookUrl: string,
+  fileBlob: Blob,
+  fileName: string,
+  email?: string,
+  extraFields?: Record<string, string>,
+): Promise<boolean> {
+  try {
+    // convert blob to base64
+    const buffer = await fileBlob.arrayBuffer();
+    const bytes = new Uint8Array(buffer);
+    let binary = "";
+    const chunkSize = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+      const chunk = bytes.subarray(i, i + chunkSize);
+      binary += String.fromCharCode.apply(null, Array.from(chunk) as any);
+    }
+    const base64 = btoa(binary);
+
+    const payload: Record<string, any> = {
+      fileName,
+      fileBase64: base64,
+    };
+    if (email) payload.email = email;
+    if (extraFields) {
+      Object.assign(payload, extraFields);
+    }
+
+    const res = await fetch(webhookUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    return res.ok;
+  } catch (err) {
+    console.error("sendFileAsJsonToWebhook error", err);
     return false;
   }
 }
