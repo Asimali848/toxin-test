@@ -1,14 +1,12 @@
-import emailjs from "@emailjs/browser";
 import html2canvas from "html2canvas";
 import { Download, Loader2, Mail, MapPin, Phone, RotateCcw, User } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
-import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, XAxis, YAxis } from "recharts";
 import { toast } from "sonner";
 import { DownloadDialog } from "@/components/download-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+// Chart components are provided by dedicated components (Air/Water/Surface/Dust/Summary)
 import {
   analyzeAirQuality,
   analyzeDustQuality,
@@ -22,9 +20,14 @@ import { generateSimpleVisualPDF } from "@/lib/simple-visual-pdf";
 import { useTestStore } from "@/lib/store";
 import { generateVisualPDFWithCharts } from "@/lib/visual-pdf-export";
 import { AirQualityChart } from "./air-quality-chart";
+import { DustQualityChart } from "./dust-quality-chart";
 import Navbar from "./landing/navbar";
+import { SummaryChart } from "./summary-chart";
+import { SurfaceQualityChart } from "./surface-quality-chart";
+import { WaterQualityChart } from "./water-quality-chart";
 
 export function ResultsDashboard() {
+  // markdown sending handled inline in this component
   const { data, userInfo, resetData } = useTestStore();
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [showDownloadDialog, setShowDownloadDialog] = useState(false);
@@ -333,44 +336,99 @@ export function ResultsDashboard() {
     }
   }, [generateVisualPDFData, getChartImages, userInfo, airAnalysis, dustAnalysis, surfaceAnalysis, waterAnalysis]);
 
-  const handleEmailReport = async () => {
-    try {
-      setIsGeneratingPDF(true);
+  // const handleEmailReport = async () => {
+  //   try {
+  //     setIsGeneratingPDF(true);
 
-      // Get the PDF blob
-      const res = await fetch("/api/report/download");
-      const blob = await res.blob();
+  //     // Get the PDF blob
+  //     const res = await fetch("/api/report/download");
+  //     const blob = await res.blob();
 
-      // Convert blob to base64
-      const reader = new FileReader();
-      reader.readAsDataURL(blob);
-      reader.onloadend = async () => {
-        const base64PDF = reader.result as string;
+  //     // Convert blob to base64
+  //     const reader = new FileReader();
+  //     reader.readAsDataURL(blob);
+  //     reader.onloadend = async () => {
+  //       const base64PDF = reader.result as string;
 
-        const templateParams = {
-          to_email: userInfo.email,
-          to_name: userInfo.name,
-          message: "Your environmental test report is attached below.",
-          file: base64PDF, // base64-encoded PDF
-          file_name: "Environmental_Report.pdf",
-        };
+  //       const templateParams = {
+  //         to_email: userInfo.email,
+  //         to_name: userInfo.name,
+  //         message: "Your environmental test report is attached below.",
+  //         file: base64PDF, // base64-encoded PDF
+  //         file_name: "Environmental_Report.pdf",
+  //       };
 
-        const result = await emailjs.send("service_9w5trja", "template_xgqb1qu", templateParams, "pWy_1lvvyxQ2tto4T");
+  //       const result = await emailjs.send("service_9w5trja", "template_xgqb1qu", templateParams, "pWy_1lvvyxQ2tto4T");
 
-        if (result.status === 200) {
-          toast.success("Email sent successfully!");
-        }
-      };
-    } catch {
-      toast.error("Failed to send email");
-    } finally {
-      setIsGeneratingPDF(false);
-    }
-  };
+  //       if (result.status === 200) {
+  //         toast.success("Email sent successfully!");
+  //       }
+  //     };
+  //   } catch {
+  //     toast.error("Failed to send email");
+  //   } finally {
+  //     setIsGeneratingPDF(false);
+  //   }
+  // };
 
   const handleDownloadClick = () => {
     setShowDownloadDialog(true);
   };
+
+  // Build a markdown representation of the dashboard data
+  const buildDashboardMarkdown = () => {
+    const lines: string[] = [];
+    lines.push(`# Environmental Test Report`);
+    lines.push(``);
+    lines.push(`**Client:** ${userInfo.name || "N/A"}`);
+    lines.push(`**Email:** ${userInfo.email || "N/A"}`);
+    lines.push(`**Address:** ${userInfo.address || "N/A"}`);
+    lines.push(`**Inspector:** ${userInfo.inspector || "N/A"}`);
+    lines.push(`**Inspection Date:** ${userInfo.inspectionDate || new Date().toLocaleDateString()}`);
+    lines.push(``);
+    lines.push(`## Air Quality`);
+    Object.entries(airAnalysis).forEach(([k, v]) => {
+      lines.push(`- ${k.replace(/([A-Z])/g, " $1").trim()}: ${v.value} (${v.level.toUpperCase()}) - ${v.message}`);
+    });
+    lines.push(``);
+    lines.push(`## Water Quality`);
+    Object.entries(waterAnalysis).forEach(([k, v]) => {
+      lines.push(`- ${k.replace(/([A-Z])/g, " $1").trim()}: ${v.value} (${v.level.toUpperCase()}) - ${v.message}`);
+    });
+    lines.push(``);
+    lines.push(`## Surface Quality`);
+    Object.entries(surfaceAnalysis).forEach(([k, v]) => {
+      lines.push(`- ${k.replace(/([A-Z])/g, " $1").trim()}: ${v.value} (${v.level.toUpperCase()}) - ${v.message}`);
+    });
+    lines.push(``);
+    lines.push(`## Dust Quality`);
+    Object.entries(dustAnalysis).forEach(([k, v]) => {
+      lines.push(`- ${k.replace(/([A-Z])/g, " $1").trim()}: ${v.value} (${v.level.toUpperCase()}) - ${v.message}`);
+    });
+
+    return lines.join("\n");
+  };
+
+  const handleEmailReport = useCallback(async () => {
+    const webhook = "https://daku-maha.app.n8n.cloud/webhook/webhook-testing";
+    const markdown = buildDashboardMarkdown();
+
+    try {
+      const form = new FormData();
+      form.append("email", userInfo.email || "");
+      form.append("subject", `Environmental Test Report - ${userInfo.name || "Client"}`);
+      form.append("markdown", markdown);
+
+      const res = await fetch(webhook, { method: "POST", body: form });
+      if (res.ok) {
+        toast.success("Report markdown sent to webhook");
+      } else {
+        toast.error("Failed to send report to webhook");
+      }
+    } catch {
+      toast.error("Error sending report to webhook");
+    }
+  }, [userInfo, buildDashboardMarkdown]);
 
   const handleReset = () => {
     resetData();
@@ -529,29 +587,7 @@ export function ResultsDashboard() {
             </CardHeader>
             <CardContent>
               <div ref={waterChartRef}>
-                <ChartContainer
-                  config={{
-                    value: {
-                      label: "Value",
-                      color: "hsl(var(--chart-4))",
-                    },
-                  }}
-                  className="h-[300px]"
-                >
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={waterChartData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--primary))" />
-                      <XAxis dataKey="name" stroke="hsl(var(--primary))" />
-                      <YAxis stroke="hsl(var(--primary))" />
-                      <ChartTooltip content={<ChartTooltipContent />} />
-                      <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                        {waterChartData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.fill} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </ChartContainer>
+                <WaterQualityChart waterAnalysis={waterAnalysis} />
               </div>
               <div className="mt-4 space-y-2">
                 {Object.entries(waterAnalysis).map(([key, result]) => {
@@ -598,29 +634,7 @@ export function ResultsDashboard() {
             </CardHeader>
             <CardContent>
               <div ref={surfaceChartRef}>
-                <ChartContainer
-                  config={{
-                    value: {
-                      label: "Value",
-                      color: "hsl(var(--chart-1))",
-                    },
-                  }}
-                  className="h-[300px]"
-                >
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={surfaceChartData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                      <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" />
-                      <YAxis stroke="hsl(var(--muted-foreground))" />
-                      <ChartTooltip content={<ChartTooltipContent />} />
-                      <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                        {surfaceChartData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.fill} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </ChartContainer>
+                <SurfaceQualityChart surfaceAnalysis={surfaceAnalysis} />
               </div>
               <div className="mt-4 space-y-2">
                 {Object.entries(surfaceAnalysis).map(([key, result]) => {
@@ -707,29 +721,7 @@ export function ResultsDashboard() {
                 ))}
               </div> */}
               <div ref={dustChartRef}>
-                <ChartContainer
-                  config={{
-                    value: {
-                      label: "Value",
-                      color: "hsl(var(--chart-1))",
-                    },
-                  }}
-                  className="h-[300px]"
-                >
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={dustChartData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                      <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" />
-                      <YAxis stroke="hsl(var(--muted-foreground))" />
-                      <ChartTooltip content={<ChartTooltipContent />} />
-                      <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                        {dustChartData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.fill} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </ChartContainer>
+                <DustQualityChart dustAnalysis={dustAnalysis} />
               </div>
               <div className="mt-4 space-y-2">
                 {Object.entries(dustAnalysis).map(([key, result]) => {
@@ -807,34 +799,7 @@ export function ResultsDashboard() {
               </div>
 
               <div ref={summaryChartRef}>
-                <ChartContainer
-                  config={{
-                    score: {
-                      label: "Health Score",
-                      color: "hsl(var(--chart-1))",
-                    },
-                  }}
-                  className="h-[400px]"
-                >
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
-                      <Pie
-                        data={summaryData.map((item) => ({
-                          name: item.category,
-                          value: item.score,
-                          fill: item.fill,
-                        }))}
-                        dataKey="value"
-                        nameKey="name"
-                        innerRadius={60}
-                        outerRadius={120}
-                        stroke="hsl(var(--border))"
-                        label={({ name, value }) => `${name}: ${Math.round(value)}`}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </ChartContainer>
+                <SummaryChart summaryData={summaryData} />
               </div>
 
               {/* Category Breakdown */}

@@ -352,8 +352,16 @@ export function analyzeWaterQuality(data: Record<string, string>): Record<string
 export function analyzeDustQuality(data: Record<string, string>): Record<string, AnalysisResult> {
   const results: Record<string, AnalysisResult> = {};
 
-  // Floor (µg/ft²) - Normal: 0–5, Warning: 6–9, High: ≥10
-  const floor = Number.parseFloat(data.floorDust) || 0;
+  // The forms/store previously used different keys (leadDust + surfaceType),
+  // while chart/analysis expects floorDust/windowSill/windowTrough. Support
+  // both shapes so a single measurement (from the DustTestForm) maps into
+  // the correct analysis slot.
+  const rawLeadDust = Number.parseFloat(data.leadDust ?? "") || 0;
+  const surfaceType = (data.surfaceType || "").toLowerCase();
+
+  // Compute values for each slot: prefer explicit fields (floorDust, windowSill, windowTrough)
+  // but if they're missing, map leadDust + surfaceType into the appropriate slot.
+  const floor = Number.parseFloat(data.floorDust ?? "") || (surfaceType === "floor" ? rawLeadDust : 0);
   results.floorDust = {
     value: floor,
     level: floor <= 5 ? "normal" : floor <= 9 ? "warning" : "high",
@@ -365,8 +373,7 @@ export function analyzeDustQuality(data: Record<string, string>): Record<string,
           : "Hazardous — cleaning or abatement needed.",
   };
 
-  // Window Sill (µg/ft²) - Normal: 0–40, Warning: 41–99, High: ≥100
-  const sill = Number.parseFloat(data.windowSill) || 0;
+  const sill = Number.parseFloat(data.windowSill ?? "") || (surfaceType === "window sill" ? rawLeadDust : 0);
   results.windowSill = {
     value: sill,
     level: sill <= 40 ? "normal" : sill <= 99 ? "warning" : "high",
@@ -378,8 +385,7 @@ export function analyzeDustQuality(data: Record<string, string>): Record<string,
           : "Hazardous — exceeds EPA limit, professional cleaning required.",
   };
 
-  // Window Trough (µg/ft²) - Normal: 0–200, Warning: 201–399, High: ≥400
-  const trough = Number.parseFloat(data.windowTrough) || 0;
+  const trough = Number.parseFloat(data.windowTrough ?? "") || (surfaceType === "window trough" ? rawLeadDust : 0);
   results.windowTrough = {
     value: trough,
     level: trough <= 200 ? "normal" : trough <= 399 ? "warning" : "high",
@@ -398,8 +404,13 @@ export function analyzeDustQuality(data: Record<string, string>): Record<string,
 export function analyzeSurfaceQuality(data: Record<string, string>): Record<string, AnalysisResult> {
   const results: Record<string, AnalysisResult> = {};
 
-  // Lead Paint (XRF) - Normal: 0–0.4, Warning: 0.5–0.9, High: ≥1.0
-  const leadPaint = Number.parseFloat(data.leadPaintXRF) || 0;
+  // Lead Paint (XRF) - the form stores two room measurements (leadPaintRoom1/2).
+  // If a consolidated leadPaintXRF value is provided use it; otherwise use the
+  // maximum of the two room readings so the analysis reflects the worst-case.
+  const leadFromXRF = Number.parseFloat(data.leadPaintXRF ?? "");
+  const leadRoom1 = Number.parseFloat(data.leadPaintRoom1 ?? "") || 0;
+  const leadRoom2 = Number.parseFloat(data.leadPaintRoom2 ?? "") || 0;
+  const leadPaint = !Number.isNaN(leadFromXRF) && leadFromXRF > 0 ? leadFromXRF : Math.max(leadRoom1, leadRoom2);
   results.leadPaintXRF = {
     value: leadPaint,
     level: leadPaint <= 0.4 ? "normal" : leadPaint <= 0.9 ? "warning" : "high",
@@ -411,8 +422,8 @@ export function analyzeSurfaceQuality(data: Record<string, string>): Record<stri
           : "Hazardous lead level — professional evaluation or remediation advised.",
   };
 
-  // Mold (Surface Sampling) - Normal: 0–50, Warning: 51–500, High: >500
-  const mold = Number.parseFloat(data.surfaceMold) || 0;
+  // Mold (Surface Sampling) - accept either surfaceMold or the shorter 'mold' form key.
+  const mold = Number.parseFloat(data.surfaceMold ?? "") || Number.parseFloat(data.mold ?? "") || 0;
   results.surfaceMold = {
     value: mold,
     level: mold <= 50 ? "normal" : mold <= 500 ? "warning" : "high",

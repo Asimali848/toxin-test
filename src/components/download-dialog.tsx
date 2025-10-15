@@ -71,13 +71,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import type { UserInfo } from "@/lib/types";
 
 interface DownloadDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSimpleDownload: () => void;
-  onEmailReport: () => void; // ✅ new prop
+  // onEmailReport will be called by the parent to send the report (no args required)
+  onEmailReport: () => void | Promise<void>;
   isGeneratingPDF: boolean;
+  userInfo?: UserInfo;
 }
 
 export function DownloadDialog({
@@ -96,7 +99,6 @@ export function DownloadDialog({
     onEmailReport();
     onOpenChange(false);
   };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
