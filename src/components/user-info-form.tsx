@@ -35,8 +35,8 @@ export function UserInfoForm({ onNext }: UserInfoFormProps) {
       email: userInfo.email,
       address: userInfo.address,
       phoneNumber: userInfo.phoneNumber,
-      inspectionDate: userInfo.inspectionDate || new Date().toISOString().split("T")[0],
-      inspector: userInfo.inspector || "M. Eckstein",
+      inspectionDate: userInfo.inspectionDate || new Date().toISOString().split("T")[1],
+      inspector: userInfo.inspector || "",
     },
   });
 
@@ -71,7 +71,7 @@ export function UserInfoForm({ onNext }: UserInfoFormProps) {
                   <FormItem>
                     <FormLabel className="text-foreground">Full Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter your full name" className="bg-background text-foreground" {...field} />
+                      <Input placeholder="Enter the client full name" className="bg-background text-foreground" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -87,7 +87,7 @@ export function UserInfoForm({ onNext }: UserInfoFormProps) {
                     <FormControl>
                       <Input
                         type="email"
-                        placeholder="Enter your email address"
+                        placeholder="Enter the client email address"
                         className="bg-background text-foreground"
                         {...field}
                       />
@@ -105,7 +105,7 @@ export function UserInfoForm({ onNext }: UserInfoFormProps) {
                     <FormLabel className="text-foreground">Address</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Enter your full address"
+                        placeholder="Enter the client full address"
                         className="bg-background text-foreground"
                         {...field}
                       />
@@ -124,7 +124,7 @@ export function UserInfoForm({ onNext }: UserInfoFormProps) {
                     <FormControl>
                       <Input
                         type="tel"
-                        placeholder="Enter your phone number"
+                        placeholder="Enter the client phone number"
                         className="bg-background text-foreground"
                         {...field}
                       />

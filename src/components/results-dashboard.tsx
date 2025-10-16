@@ -190,27 +190,59 @@ export function ResultsDashboard() {
     return "#ef4444"; // Red for poor scores
   };
 
+  // Helper to detect whether any meaningful data was entered for a category
+  const hasAnalysisData = (analysis: Record<string, { value?: number }>) => {
+    // Consider a category has data when at least one value is non-zero and defined
+    return Object.values(analysis).some((v) => {
+      if (!v) return false;
+      const val = v.value;
+      return val !== undefined && val !== null && !Number.isNaN(val) && val !== 0;
+    });
+  };
+
+  const hasAirData = hasAnalysisData(airAnalysis);
+  const hasWaterData = hasAnalysisData(waterAnalysis);
+  const hasSurfaceData = hasAnalysisData(surfaceAnalysis);
+  const hasDustData = hasAnalysisData(dustAnalysis);
+
   const summaryData = [
-    {
-      category: "Air Quality",
-      score: calculateCategoryScore(airAnalysis),
-      fill: getSummaryColor(calculateCategoryScore(airAnalysis)),
-    },
-    {
-      category: "Water Quality",
-      score: calculateCategoryScore(waterAnalysis),
-      fill: getSummaryColor(calculateCategoryScore(waterAnalysis)),
-    },
-    {
-      category: "Surface Quality",
-      score: calculateCategoryScore(surfaceAnalysis),
-      fill: getSummaryColor(calculateCategoryScore(surfaceAnalysis)),
-    },
-    {
-      category: "Dust Quality",
-      score: calculateCategoryScore(dustAnalysis),
-      fill: getSummaryColor(calculateCategoryScore(dustAnalysis)),
-    },
+    // Only include categories that have data
+    ...(hasAirData
+      ? [
+          {
+            category: "Air Quality",
+            score: calculateCategoryScore(airAnalysis),
+            fill: getSummaryColor(calculateCategoryScore(airAnalysis)),
+          },
+        ]
+      : []),
+    ...(hasWaterData
+      ? [
+          {
+            category: "Water Quality",
+            score: calculateCategoryScore(waterAnalysis),
+            fill: getSummaryColor(calculateCategoryScore(waterAnalysis)),
+          },
+        ]
+      : []),
+    ...(hasSurfaceData
+      ? [
+          {
+            category: "Surface Quality",
+            score: calculateCategoryScore(surfaceAnalysis),
+            fill: getSummaryColor(calculateCategoryScore(surfaceAnalysis)),
+          },
+        ]
+      : []),
+    ...(hasDustData
+      ? [
+          {
+            category: "Dust Quality",
+            score: calculateCategoryScore(dustAnalysis),
+            fill: getSummaryColor(calculateCategoryScore(dustAnalysis)),
+          },
+        ]
+      : []),
   ];
 
   const generateVisualPDFData = useCallback(async () => {
@@ -228,12 +260,41 @@ export function ResultsDashboard() {
     async (el: HTMLElement | null): Promise<string | undefined> => {
       if (!el) return undefined;
       try {
-        const canvas = await html2canvas(el, {
+        // Clone element and force Helvetica font-family + normal weight and white background
+        const clone = el.cloneNode(true) as HTMLElement;
+        // Apply styles to clone container
+        clone.style.background = "#ffffff";
+        clone.style.position = "absolute";
+        clone.style.left = "-9999px";
+        clone.style.top = "0px";
+        // Recursively force helvetica font and normal weight
+        const forceFont = (node: HTMLElement | Element) => {
+          try {
+            if (node instanceof HTMLElement) {
+              node.style.fontFamily = 'Helvetica, Arial, sans-serif';
+              node.style.fontWeight = 'normal';
+              // Ensure text color stays readable
+              if (!node.style.backgroundColor) node.style.backgroundColor = 'transparent';
+            }
+            node.childNodes.forEach((c) => {
+              if (c && c.nodeType === Node.ELEMENT_NODE) {
+                forceFont(c as HTMLElement);
+              }
+            });
+          } catch (e) {
+            // ignore
+          }
+        };
+        forceFont(clone);
+
+        document.body.appendChild(clone);
+        const canvas = await html2canvas(clone as HTMLElement, {
           scale: 2,
           backgroundColor: "#ffffff",
           logging: false,
           useCORS: true,
         });
+        document.body.removeChild(clone);
         return canvas.toDataURL("image/png", 1.0);
       } catch {
         return undefined;
@@ -253,6 +314,18 @@ export function ResultsDashboard() {
         // Ensure xmlns is present
         if (!clonedSvg.getAttribute("xmlns")) {
           clonedSvg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+        }
+        // Force Helvetica font for SVG text elements so exported image uses it
+        try {
+          clonedSvg.style.fontFamily = 'Helvetica, Arial, sans-serif';
+          clonedSvg.style.fontWeight = 'normal';
+          const texts = clonedSvg.querySelectorAll('text');
+          texts.forEach((t) => {
+            (t as SVGElement).setAttribute('font-family', 'Helvetica, Arial, sans-serif');
+            (t as SVGElement).setAttribute('font-weight', 'normal');
+          });
+        } catch (e) {
+          // ignore
         }
         // Compute export dimensions
         const rect = (svg as SVGSVGElement).getBoundingClientRect();
@@ -309,23 +382,24 @@ export function ResultsDashboard() {
     // small delay to ensure charts are painted
     await new Promise((r) => setTimeout(r, 500));
     // Try SVG capture first, then fall back to html2canvas per chart
-    const airChart =
-      (await captureChartSvg(airChartRef.current)) ||
-      (await captureElement(airChartRef.current));
-    const waterChart =
-      (await captureChartSvg(waterChartRef.current)) ||
-      (await captureElement(waterChartRef.current));
-    const surfaceChart =
-      (await captureChartSvg(surfaceChartRef.current)) ||
-      (await captureElement(surfaceChartRef.current));
-    const dustChart =
-      (await captureChartSvg(dustChartRef.current)) ||
-      (await captureElement(dustChartRef.current));
+    const airChart = hasAirData
+      ? (await captureChartSvg(airChartRef.current)) || (await captureElement(airChartRef.current))
+      : undefined;
+    const waterChart = hasWaterData
+      ? (await captureChartSvg(waterChartRef.current)) || (await captureElement(waterChartRef.current))
+      : undefined;
+    const surfaceChart = hasSurfaceData
+      ? (await captureChartSvg(surfaceChartRef.current)) || (await captureElement(surfaceChartRef.current))
+      : undefined;
+    const dustChart = hasDustData
+      ? (await captureChartSvg(dustChartRef.current)) || (await captureElement(dustChartRef.current))
+      : undefined;
     const summaryChart =
-      (await captureChartSvg(summaryChartRef.current)) ||
-      (await captureElement(summaryChartRef.current));
+      summaryChartRef.current && (hasAirData || hasWaterData || hasSurfaceData || hasDustData)
+        ? (await captureChartSvg(summaryChartRef.current)) || (await captureElement(summaryChartRef.current))
+        : undefined;
     return { airChart, waterChart, surfaceChart, dustChart, summaryChart };
-  }, [captureChartSvg, captureElement]);
+  }, [captureChartSvg, captureElement, hasAirData, hasWaterData, hasSurfaceData, hasDustData]);
 
   const handleSimpleDownload = useCallback(async () => {
     setIsGeneratingPDF(true);
@@ -706,9 +780,15 @@ export function ResultsDashboard() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div ref={airChartRef}>
-                <AirQualityChart airAnalysis={airAnalysis} />
-              </div>
+                  {hasAirData ? (
+                    <div ref={airChartRef}>
+                      <AirQualityChart airAnalysis={airAnalysis} />
+                    </div>
+                  ) : (
+                    <div className="rounded-lg bg-muted/20 p-6 text-center text-sm text-muted-foreground">
+                      No air test data entered — chart will appear after you submit air test values.
+                    </div>
+                  )}
               <div className="mt-4 space-y-2">
                 {Object.entries(airAnalysis).map(([key, result]) => {
                   const chartItem = airChartData.find(
@@ -763,9 +843,15 @@ export function ResultsDashboard() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div ref={waterChartRef}>
-                <WaterQualityChart waterAnalysis={waterAnalysis} />
-              </div>
+              {hasWaterData ? (
+                <div ref={waterChartRef}>
+                  <WaterQualityChart waterAnalysis={waterAnalysis} />
+                </div>
+              ) : (
+                <div className="rounded-lg bg-muted/20 p-6 text-center text-sm text-muted-foreground">
+                  No water test data entered — chart will appear after you submit water test values.
+                </div>
+              )}
               <div className="mt-4 space-y-2">
                 {Object.entries(waterAnalysis).map(([key, result]) => {
                   const chartItem = waterChartData.find(
@@ -826,9 +912,15 @@ export function ResultsDashboard() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div ref={surfaceChartRef}>
-                <SurfaceQualityChart surfaceAnalysis={surfaceAnalysis} />
-              </div>
+              {hasSurfaceData ? (
+                <div ref={surfaceChartRef}>
+                  <SurfaceQualityChart surfaceAnalysis={surfaceAnalysis} />
+                </div>
+              ) : (
+                <div className="rounded-lg bg-muted/20 p-6 text-center text-sm text-muted-foreground">
+                  No surface test data entered — chart will appear after you submit surface test values.
+                </div>
+              )}
               <div className="mt-4 space-y-2">
                 {Object.entries(surfaceAnalysis).map(([key, result]) => {
                   const chartItem = surfaceChartData.find(
@@ -932,9 +1024,15 @@ export function ResultsDashboard() {
                   </div>
                 ))}
               </div> */}
-              <div ref={dustChartRef}>
-                <DustQualityChart dustAnalysis={dustAnalysis} />
-              </div>
+              {hasDustData ? (
+                <div ref={dustChartRef}>
+                  <DustQualityChart dustAnalysis={dustAnalysis} />
+                </div>
+              ) : (
+                <div className="rounded-lg bg-muted/20 p-6 text-center text-sm text-muted-foreground">
+                  No dust test data entered — chart will appear after you submit dust test values.
+                </div>
+              )}
               <div className="mt-4 space-y-2">
                 {Object.entries(dustAnalysis).map(([key, result]) => {
                   const chartItem = dustChartData.find(
@@ -1035,9 +1133,15 @@ export function ResultsDashboard() {
                 </div>
               </div>
 
-              <div ref={summaryChartRef}>
-                <SummaryChart summaryData={summaryData} />
-              </div>
+              {(hasAirData || hasWaterData || hasSurfaceData || hasDustData) ? (
+                <div ref={summaryChartRef}>
+                  <SummaryChart summaryData={summaryData} />
+                </div>
+              ) : (
+                <div className="rounded-lg bg-muted/20 p-6 text-center text-sm text-muted-foreground">
+                  No category data available yet — summary chart will appear after tests are entered.
+                </div>
+              )}
 
               {/* Category Breakdown */}
               <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-4">

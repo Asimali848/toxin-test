@@ -57,23 +57,23 @@ export async function generatePDF(
   pdf.setFont("helvetica", "normal");
   pdf.text(userInfo.address || "Not specified", 45, yPosition);
 
-  pdf.text("Inspection Date:", 20, yPosition + 4);
+  pdf.text("Date:", 20, yPosition + 4);
   pdf.text(
     userInfo.inspectionDate
       ? new Date(userInfo.inspectionDate).toLocaleDateString("en-US", {
-          year: "numeric",
-          month: "short",
-          day: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        })
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
       : new Date().toLocaleDateString("en-US", {
-          year: "numeric",
-          month: "short",
-          day: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
     45,
     yPosition + 4,
   );
@@ -133,10 +133,10 @@ export async function generatePDF(
   }
 
   // Add sections with charts
-  addSectionWithChart("Air Quality Analysis", airAnalysis, chartImages?.airChart);
-  addSectionWithChart("Water Quality Analysis", waterAnalysis, chartImages?.waterChart);
-  addSectionWithChart("Surface Quality Analysis", surfaceAnalysis, chartImages?.surfaceChart);
-  addSectionWithChart("Dust Quality Analysis", dustAnalysis, chartImages?.dustChart);
+  await addSectionWithChart("Air Quality Analysis", airAnalysis, chartImages?.airChart);
+  await addSectionWithChart("Water Quality Analysis", waterAnalysis, chartImages?.waterChart);
+  await addSectionWithChart("Surface Quality Analysis", surfaceAnalysis, chartImages?.surfaceChart);
+  await addSectionWithChart("Dust Quality Analysis", dustAnalysis, chartImages?.dustChart);
 
   // Summary Chart
   if (chartImages?.summaryChart) {
@@ -177,9 +177,10 @@ export async function generatePDF(
     pdf.text("Overall environmental health scores across all test categories", 15, yPosition);
     yPosition += 10;
 
-    try {
-      pdf.addImage(chartImages.summaryChart, "PNG", 25, yPosition, pageWidth - 50, 80);
-      yPosition += 90;
+      try {
+        const fitted = await loadImageAndFit(chartImages.summaryChart, pageWidth - 50, 80);
+        pdf.addImage(chartImages.summaryChart, "PNG", 25, yPosition, fitted.width, fitted.height);
+      yPosition += fitted.height + 10;
     } catch (_error) {
       pdf.setFontSize(9);
       pdf.setTextColor(150, 150, 150);
@@ -189,7 +190,7 @@ export async function generatePDF(
     }
   }
 
-  function addSectionWithChart(
+  async function addSectionWithChart(
     title: string,
     data: Record<string, { value: number; level: RiskLevel; message: string }>,
     chartImage?: string,
@@ -261,15 +262,17 @@ export async function generatePDF(
       yPosition += 5;
       pdf.setFontSize(10);
       pdf.setFont("helvetica", "normal");
-      pdf.text("Visual Analysis:", 20, yPosition);
-      yPosition += 8;
+      pdf.text("Visual Analysis:", 28, yPosition);
+      yPosition += 12;
 
       try {
-        pdf.addImage(chartImage, "PNG", 25, yPosition, pageWidth - 50, 60);
-        yPosition += 70;
+        const fitted = await loadImageAndFit(chartImage, pageWidth - 50, 60);
+        pdf.addImage(chartImage, "PNG", 25, yPosition, fitted.width, fitted.height);
+        yPosition += fitted.height + 10;
       } catch (_error) {
-        pdf.setFontSize(9);
+        pdf.setFontSize(12);
         pdf.setTextColor(150, 150, 150);
+        pdf.setFont("helvetica", "normal");
         pdf.text("Chart could not be displayed", 25, yPosition);
         pdf.setTextColor(0, 0, 0);
         yPosition += 20;
@@ -296,6 +299,7 @@ export async function generatePDF(
         const label = key.replace(/([A-Z])/g, " $1").trim();
         const color = getRiskColorRGB(result.level);
         pdf.setTextColor(color.r, color.g, color.b);
+        pdf.setFont("helvetica", "normal");
         pdf.text(`• ${label}: ${result.value} (${result.level.toUpperCase()})`, 25, yPosition);
         pdf.setTextColor(0, 0, 0);
         yPosition += 5;
@@ -425,13 +429,11 @@ export async function generatePDF(
 
   pdf.setFontSize(9);
   pdf.setFont("helvetica", "normal");
-  pdf.text("Environmental Health Services", 15, yPosition);
+  pdf.text("Toxin Testers", 15, yPosition);
   yPosition += 4;
-  pdf.text("Phone: (555) 123-4567", 15, yPosition);
+  pdf.text("Email:  info@toxintesters.com", 15, yPosition);
   yPosition += 4;
-  pdf.text("Email: info@envhealth.com", 15, yPosition);
-  yPosition += 4;
-  pdf.text("Website: www.envhealth.com", 15, yPosition);
+  pdf.text("Website: www.toxintesters.com", 15, yPosition);
 
   // Footer
   yPosition = pageHeight - 20;
@@ -442,7 +444,7 @@ export async function generatePDF(
     align: "center",
   });
   yPosition += 4;
-  pdf.text("© 2024 Environmental Health Services. All rights reserved.", pageWidth / 2, yPosition, { align: "center" });
+  pdf.text("© 2024 Toxin Testers. All rights reserved.", pageWidth / 2, yPosition, { align: "center" });
 
   // Generate filename with client name
   const clientName = userInfo.name ? userInfo.name.replace(/\s+/g, "-").toLowerCase() : "client";
@@ -487,7 +489,7 @@ This report contains detailed analysis of:
 If you have any questions about this report, please don't hesitate to contact us.
 
 Best regards,
-Environmental Health Services Team
+Toxin Testers Team
     `,
     );
     formData.append("attachment", blob, fileName);
@@ -546,4 +548,29 @@ function calculateWeightedScore(
 
 export function getRiskColor(level: RiskLevel): string {
   return `rgb(${getRiskColorRGB(level).r}, ${getRiskColorRGB(level).g}, ${getRiskColorRGB(level).b})`;
+}
+
+// Helper: load an image data URL and compute fitted width/height in mm preserving aspect ratio
+async function loadImageAndFit(
+  dataUrl: string | undefined,
+  maxWidthMm: number,
+  maxHeightMm: number,
+): Promise<{ width: number; height: number }> {
+  if (!dataUrl) throw new Error("No image data");
+  // Create image element to measure natural size
+  const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const i = new Image();
+    i.onload = () => resolve(i);
+    i.onerror = (e) => reject(e);
+    i.src = dataUrl;
+  });
+
+  // jsPDF uses mm units here. Convert px to mm using 96 DPI (px per inch) and 25.4 mm per inch
+  const pxToMm = (px: number) => (px / 96) * 25.4;
+  const naturalW = pxToMm(img.naturalWidth || img.width);
+  const naturalH = pxToMm(img.naturalHeight || img.height);
+
+  // Compute scale to fit inside maxWidthMm x maxHeightMm while preserving aspect
+  const scale = Math.min(maxWidthMm / naturalW, maxHeightMm / naturalH, 1);
+  return { width: naturalW * scale, height: naturalH * scale };
 }
