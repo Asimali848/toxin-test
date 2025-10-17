@@ -410,7 +410,31 @@ export function analyzeSurfaceQuality(data: Record<string, string>): Record<stri
   const leadFromXRF = Number.parseFloat(data.leadPaintXRF ?? "");
   const leadRoom1 = Number.parseFloat(data.leadPaintRoom1 ?? "") || 0;
   const leadRoom2 = Number.parseFloat(data.leadPaintRoom2 ?? "") || 0;
-  const leadPaint = !Number.isNaN(leadFromXRF) && leadFromXRF > 0 ? leadFromXRF : Math.max(leadRoom1, leadRoom2);
+  // Collect additional detailed location fields (if provided) and include them in the worst-case
+  const detailedKeys = [
+    "wallA",
+    "wallB",
+    "wallC",
+    "wallD",
+    "doorPanel",
+    "doorJamb",
+    "doorCasing",
+    "closetDoor",
+    "closetJamb",
+    "closetCasing",
+    "closetInsideWall",
+    "closetShelf",
+    "shelfSupport",
+    "roomBaseboard",
+    "molding",
+    "radiator",
+    "windowSash",
+    "windowCasing",
+    "windowSill",
+  ];
+  const detailedValues = detailedKeys.map((k) => Number.parseFloat((data as any)[k] ?? "") || 0);
+  const maxDetailed = detailedValues.length ? Math.max(...detailedValues) : 0;
+  const leadPaint = !Number.isNaN(leadFromXRF) && leadFromXRF > 0 ? leadFromXRF : Math.max(leadRoom1, leadRoom2, maxDetailed);
   results.leadPaintXRF = {
     value: leadPaint,
     level: leadPaint <= 0.4 ? "normal" : leadPaint <= 0.9 ? "warning" : "high",

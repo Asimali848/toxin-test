@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useTestStore } from "@/lib/store";
+import GuidanceBlock from "@/components/ui/guidance-block";
 
 export function WaterTestForm() {
   const { data, updateWaterData, setCurrentTab } = useTestStore();
@@ -32,7 +33,7 @@ export function WaterTestForm() {
           <div className="space-y-6">
             <div className="space-y-4">
               <h3 className="font-semibold text-foreground text-sm">Metals in Drinking Water (ppb)</h3>
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                 <div className="space-y-2">
                   <Label htmlFor="silver">Silver (Ag)</Label>
                   <Input
@@ -57,6 +58,7 @@ export function WaterTestForm() {
                     onChange={(e) => updateWaterData({ arsenic: e.target.value })}
                     className="bg-background"
                   />
+                  <GuidanceBlock metricKey="arsenic" value={waterData.arsenic} />
                 </div>
 
                 <div className="space-y-2">
@@ -122,6 +124,7 @@ export function WaterTestForm() {
                     onChange={(e) => updateWaterData({ lead: e.target.value })}
                     className="bg-background"
                   />
+                  <GuidanceBlock metricKey="lead" value={waterData.lead} />
                 </div>
 
                 <div className="space-y-2">
@@ -139,7 +142,7 @@ export function WaterTestForm() {
               </div>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="pfas">PFAS in Drinking Water (ppt)</Label>
                 <Input
@@ -151,6 +154,7 @@ export function WaterTestForm() {
                   onChange={(e) => updateWaterData({ pfas: e.target.value })}
                   className="bg-background"
                 />
+                <GuidanceBlock metricKey="pfas" value={waterData.pfas} />
               </div>
 
               <div className="space-y-2">

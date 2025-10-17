@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useTestStore } from "@/lib/store";
+import GuidanceBlock from "@/components/ui/guidance-block";
 
 export function AirTestForm() {
   const { data, updateAirData, setCurrentTab } = useTestStore();
@@ -27,7 +28,7 @@ export function AirTestForm() {
           }}
           className="space-y-6"
         >
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             <div className="space-y-2">
               <Label htmlFor="carbonDioxide">Carbon Dioxide (ppm)</Label>
               <Input
@@ -39,6 +40,7 @@ export function AirTestForm() {
                 onChange={(e) => updateAirData({ carbonDioxide: e.target.value })}
                 className="bg-background"
               />
+              <GuidanceBlock metricKey="carbonDioxide" value={airData.carbonDioxide} />
             </div>
 
             <div className="space-y-2">
@@ -52,6 +54,7 @@ export function AirTestForm() {
                 onChange={(e) => updateAirData({ carbonMonoxide: e.target.value })}
                 className="bg-background"
               />
+              <GuidanceBlock metricKey="carbonMonoxide" value={airData.carbonMonoxide} />
             </div>
 
             <div className="space-y-2">
@@ -78,6 +81,7 @@ export function AirTestForm() {
                 onChange={(e) => updateAirData({ pm25: e.target.value })}
                 className="bg-background"
               />
+              <GuidanceBlock metricKey="pm25" value={airData.pm25} />
             </div>
 
             <div className="space-y-2">
@@ -104,6 +108,7 @@ export function AirTestForm() {
                 onChange={(e) => updateAirData({ relativeHumidity: e.target.value })}
                 className="bg-background"
               />
+              <GuidanceBlock metricKey="relativeHumidity" value={airData.relativeHumidity} />
             </div>
 
             <div className="space-y-2">

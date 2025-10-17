@@ -35,6 +35,27 @@ export interface SurfaceTestData {
   leadPaintRoom1: string;
   leadPaintRoom2: string;
   mold: string;
+  // Detailed surface locations (optional)
+  roomName?: string;
+  wallA?: string;
+  wallB?: string;
+  wallC?: string;
+  wallD?: string;
+  doorPanel?: string;
+  doorJamb?: string;
+  doorCasing?: string;
+  closetDoor?: string;
+  closetJamb?: string;
+  closetCasing?: string;
+  closetInsideWall?: string;
+  closetShelf?: string;
+  shelfSupport?: string;
+  roomBaseboard?: string;
+  molding?: string;
+  radiator?: string;
+  windowSash?: string;
+  windowCasing?: string;
+  windowSill?: string;
 }
 
 export interface TestData {

@@ -38,6 +38,7 @@ import Navbar from "./landing/navbar";
 import { SummaryChart } from "./summary-chart";
 import { SurfaceQualityChart } from "./surface-quality-chart";
 import { WaterQualityChart } from "./water-quality-chart";
+import Thermometer from "./ui/thermometer";
 
 export function ResultsDashboard() {
   // markdown sending handled inline in this component
@@ -190,13 +191,35 @@ export function ResultsDashboard() {
     return "#ef4444"; // Red for poor scores
   };
 
+  // Per-metric thermometer scales (min/max). Values chosen as sensible defaults.
+  const metricScales: Record<string, { min: number; max: number }> = {
+    // Air metrics
+    carbonDioxide: { min: 0, max: 2000 },
+    carbonMonoxide: { min: 0, max: 50 },
+    pm25: { min: 0, max: 150 },
+    relativeHumidity: { min: 0, max: 100 },
+    // Water metrics
+    lead: { min: 0, max: 100 }, // ppb
+    arsenic: { min: 0, max: 100 },
+    pfas: { min: 0, max: 10 },
+    // Surface metrics
+    leadPaintXRF: { min: 0, max: 10 }, // mg/cm²
+    surfaceMold: { min: 0, max: 2000 }, // CFU/cm²
+    // Dust metrics
+    floorDust: { min: 0, max: 50 },
+    windowSill: { min: 0, max: 500 },
+    windowTrough: { min: 0, max: 1000 },
+  };
+
   // Helper to detect whether any meaningful data was entered for a category
   const hasAnalysisData = (analysis: Record<string, { value?: number }>) => {
     // Consider a category has data when at least one value is non-zero and defined
     return Object.values(analysis).some((v) => {
       if (!v) return false;
       const val = v.value;
-      return val !== undefined && val !== null && !Number.isNaN(val) && val !== 0;
+      return (
+        val !== undefined && val !== null && !Number.isNaN(val) && val !== 0
+      );
     });
   };
 
@@ -271,10 +294,11 @@ export function ResultsDashboard() {
         const forceFont = (node: HTMLElement | Element) => {
           try {
             if (node instanceof HTMLElement) {
-              node.style.fontFamily = 'Helvetica, Arial, sans-serif';
-              node.style.fontWeight = 'normal';
+              node.style.fontFamily = "Helvetica, Arial, sans-serif";
+              node.style.fontWeight = "normal";
               // Ensure text color stays readable
-              if (!node.style.backgroundColor) node.style.backgroundColor = 'transparent';
+              if (!node.style.backgroundColor)
+                node.style.backgroundColor = "transparent";
             }
             node.childNodes.forEach((c) => {
               if (c && c.nodeType === Node.ELEMENT_NODE) {
@@ -317,12 +341,15 @@ export function ResultsDashboard() {
         }
         // Force Helvetica font for SVG text elements so exported image uses it
         try {
-          clonedSvg.style.fontFamily = 'Helvetica, Arial, sans-serif';
-          clonedSvg.style.fontWeight = 'normal';
-          const texts = clonedSvg.querySelectorAll('text');
+          clonedSvg.style.fontFamily = "Helvetica, Arial, sans-serif";
+          clonedSvg.style.fontWeight = "normal";
+          const texts = clonedSvg.querySelectorAll("text");
           texts.forEach((t) => {
-            (t as SVGElement).setAttribute('font-family', 'Helvetica, Arial, sans-serif');
-            (t as SVGElement).setAttribute('font-weight', 'normal');
+            (t as SVGElement).setAttribute(
+              "font-family",
+              "Helvetica, Arial, sans-serif"
+            );
+            (t as SVGElement).setAttribute("font-weight", "normal");
           });
         } catch (e) {
           // ignore
@@ -383,23 +410,36 @@ export function ResultsDashboard() {
     await new Promise((r) => setTimeout(r, 500));
     // Try SVG capture first, then fall back to html2canvas per chart
     const airChart = hasAirData
-      ? (await captureChartSvg(airChartRef.current)) || (await captureElement(airChartRef.current))
+      ? (await captureChartSvg(airChartRef.current)) ||
+        (await captureElement(airChartRef.current))
       : undefined;
     const waterChart = hasWaterData
-      ? (await captureChartSvg(waterChartRef.current)) || (await captureElement(waterChartRef.current))
+      ? (await captureChartSvg(waterChartRef.current)) ||
+        (await captureElement(waterChartRef.current))
       : undefined;
     const surfaceChart = hasSurfaceData
-      ? (await captureChartSvg(surfaceChartRef.current)) || (await captureElement(surfaceChartRef.current))
+      ? (await captureChartSvg(surfaceChartRef.current)) ||
+        (await captureElement(surfaceChartRef.current))
       : undefined;
     const dustChart = hasDustData
-      ? (await captureChartSvg(dustChartRef.current)) || (await captureElement(dustChartRef.current))
+      ? (await captureChartSvg(dustChartRef.current)) ||
+        (await captureElement(dustChartRef.current))
       : undefined;
     const summaryChart =
-      summaryChartRef.current && (hasAirData || hasWaterData || hasSurfaceData || hasDustData)
-        ? (await captureChartSvg(summaryChartRef.current)) || (await captureElement(summaryChartRef.current))
+      summaryChartRef.current &&
+      (hasAirData || hasWaterData || hasSurfaceData || hasDustData)
+        ? (await captureChartSvg(summaryChartRef.current)) ||
+          (await captureElement(summaryChartRef.current))
         : undefined;
     return { airChart, waterChart, surfaceChart, dustChart, summaryChart };
-  }, [captureChartSvg, captureElement, hasAirData, hasWaterData, hasSurfaceData, hasDustData]);
+  }, [
+    captureChartSvg,
+    captureElement,
+    hasAirData,
+    hasWaterData,
+    hasSurfaceData,
+    hasDustData,
+  ]);
 
   const handleSimpleDownload = useCallback(async () => {
     setIsGeneratingPDF(true);
@@ -780,15 +820,16 @@ export function ResultsDashboard() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-                  {hasAirData ? (
-                    <div ref={airChartRef}>
-                      <AirQualityChart airAnalysis={airAnalysis} />
-                    </div>
-                  ) : (
-                    <div className="rounded-lg bg-muted/20 p-6 text-center text-sm text-muted-foreground">
-                      No air test data entered — chart will appear after you submit air test values.
-                    </div>
-                  )}
+              {hasAirData ? (
+                <div ref={airChartRef}>
+                  <AirQualityChart airAnalysis={airAnalysis} />
+                </div>
+              ) : (
+                <div className="rounded-lg bg-muted/20 p-6 text-center text-sm text-muted-foreground">
+                  No air test data entered — chart will appear after you submit
+                  air test values.
+                </div>
+              )}
               <div className="mt-4 space-y-2">
                 {Object.entries(airAnalysis).map(([key, result]) => {
                   const chartItem = airChartData.find(
@@ -819,9 +860,22 @@ export function ResultsDashboard() {
                         )}
                       </div>
                       <div className="flex items-center gap-3">
-                        <span className="text-muted-foreground text-sm">
-                          {result.message}
-                        </span>
+                        <div className="flex flex-col">
+                          <span className="text-muted-foreground text-sm">
+                            {result.message}
+                          </span>
+                          {metricScales[key] && (
+                            <div className="mt-1">
+                              <Thermometer
+                                value={result.value || 0}
+                                min={metricScales[key].min}
+                                max={metricScales[key].max}
+                                width={140}
+                                height={12}
+                              />
+                            </div>
+                          )}
+                        </div>
                         <Badge className={getRiskBadgeClass(result.level)}>
                           {result.level}
                         </Badge>
@@ -849,7 +903,8 @@ export function ResultsDashboard() {
                 </div>
               ) : (
                 <div className="rounded-lg bg-muted/20 p-6 text-center text-sm text-muted-foreground">
-                  No water test data entered — chart will appear after you submit water test values.
+                  No water test data entered — chart will appear after you
+                  submit water test values.
                 </div>
               )}
               <div className="mt-4 space-y-2">
@@ -879,9 +934,22 @@ export function ResultsDashboard() {
                         )}
                       </div>
                       <div className="flex items-center gap-3">
-                        <span className="text-muted-foreground text-sm">
-                          {result.message}
-                        </span>
+                        <div className="flex flex-col">
+                          <span className="text-muted-foreground text-sm">
+                            {result.message}
+                          </span>
+                          {metricScales[key] && (
+                            <div className="mt-1">
+                              <Thermometer
+                                value={result.value || 0}
+                                min={metricScales[key].min}
+                                max={metricScales[key].max}
+                                width={140}
+                                height={12}
+                              />
+                            </div>
+                          )}
+                        </div>
                         <Badge className={getRiskBadgeClass(result.level)}>
                           {result.level}
                         </Badge>
@@ -918,7 +986,8 @@ export function ResultsDashboard() {
                 </div>
               ) : (
                 <div className="rounded-lg bg-muted/20 p-6 text-center text-sm text-muted-foreground">
-                  No surface test data entered — chart will appear after you submit surface test values.
+                  No surface test data entered — chart will appear after you
+                  submit surface test values.
                 </div>
               )}
               <div className="mt-4 space-y-2">
@@ -949,9 +1018,22 @@ export function ResultsDashboard() {
                         )}
                       </div>
                       <div className="flex items-center gap-3">
-                        <span className="text-muted-foreground text-sm">
-                          {result.message}
-                        </span>
+                        <div className="flex flex-col">
+                          <span className="text-muted-foreground text-sm">
+                            {result.message}
+                          </span>
+                          {metricScales[key] && (
+                            <div className="mt-1">
+                              <Thermometer
+                                value={result.value || 0}
+                                min={metricScales[key].min}
+                                max={metricScales[key].max}
+                                width={140}
+                                height={12}
+                              />
+                            </div>
+                          )}
+                        </div>
                         <Badge className={getRiskBadgeClass(result.level)}>
                           {result.level}
                         </Badge>
@@ -974,17 +1056,13 @@ export function ResultsDashboard() {
                         mg/cm²
                       </span>
                       <div className="flex items-center gap-2">
-                        <div className="relative h-4 w-32 rounded-full bg-gradient-to-r from-green-500 via-yellow-500 to-red-500">
-                          <div
-                            className="absolute top-0 h-4 w-1 rounded-full bg-black"
-                            style={{
-                              left: `${Math.min(
-                                (surfaceAnalysis.leadPaintXRF.value / 10) * 100,
-                                100
-                              )}%`,
-                            }}
-                          />
-                        </div>
+                        <Thermometer
+                          value={surfaceAnalysis.leadPaintXRF.value}
+                          min={0}
+                          max={10}
+                          width={220}
+                          height={18}
+                        />
                         <span className="text-muted-foreground text-xs">
                           0-10 mg/cm²
                         </span>
@@ -1030,7 +1108,8 @@ export function ResultsDashboard() {
                 </div>
               ) : (
                 <div className="rounded-lg bg-muted/20 p-6 text-center text-sm text-muted-foreground">
-                  No dust test data entered — chart will appear after you submit dust test values.
+                  No dust test data entered — chart will appear after you submit
+                  dust test values.
                 </div>
               )}
               <div className="mt-4 space-y-2">
@@ -1070,9 +1149,22 @@ export function ResultsDashboard() {
                         )}
                       </div>
                       <div className="flex items-center gap-3">
-                        <span className="text-muted-foreground text-sm">
-                          {result.message}
-                        </span>
+                        <div className="flex flex-col">
+                          <span className="text-muted-foreground text-sm">
+                            {result.message}
+                          </span>
+                          {metricScales[key] && (
+                            <div className="mt-1">
+                              <Thermometer
+                                value={result.value || 0}
+                                min={metricScales[key].min}
+                                max={metricScales[key].max}
+                                width={140}
+                                height={12}
+                              />
+                            </div>
+                          )}
+                        </div>
                         <div className="flex items-center gap-2">
                           <span className="text-sm">
                             {passFailIcon} {passFailText}
@@ -1133,13 +1225,14 @@ export function ResultsDashboard() {
                 </div>
               </div>
 
-              {(hasAirData || hasWaterData || hasSurfaceData || hasDustData) ? (
+              {hasAirData || hasWaterData || hasSurfaceData || hasDustData ? (
                 <div ref={summaryChartRef}>
                   <SummaryChart summaryData={summaryData} />
                 </div>
               ) : (
                 <div className="rounded-lg bg-muted/20 p-6 text-center text-sm text-muted-foreground">
-                  No category data available yet — summary chart will appear after tests are entered.
+                  No category data available yet — summary chart will appear
+                  after tests are entered.
                 </div>
               )}
 

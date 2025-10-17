@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTestStore } from "@/lib/store";
 import { CancelModal } from "./cancel-modal";
+import GuidanceBlock from "@/components/ui/guidance-block";
 
 export function DustTestForm() {
   const { data, updateDustData, resetData, setShowResults } = useTestStore();
@@ -74,46 +75,48 @@ export function DustTestForm() {
 
         <CardContent>
           <form onSubmit={handleSave} className="space-y-6">
-            {/* Surface Type Selection */}
-            <div className="space-y-2">
-              <Label htmlFor="surfaceType">Surface Type</Label>
-              <Select value={surfaceType} onValueChange={(value) => setSurfaceType(value)}>
-                <SelectTrigger id="surfaceType" className="bg-background">
-                  <SelectValue placeholder="Select surface type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Floor">Floor</SelectItem>
-                  <SelectItem value="Window Sill">Window Sill</SelectItem>
-                  <SelectItem value="Window Trough">Window Trough</SelectItem>
-                  <SelectItem value="Other">Other</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="surfaceType">Surface Type</Label>
+                <Select value={surfaceType} onValueChange={(value) => setSurfaceType(value)}>
+                  <SelectTrigger id="surfaceType" className="bg-background">
+                    <SelectValue placeholder="Select surface type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Floor">Floor</SelectItem>
+                    <SelectItem value="Window Sill">Window Sill</SelectItem>
+                    <SelectItem value="Window Trough">Window Trough</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
 
-              {surfaceType === "Other" && (
-                <div className="mt-2">
-                  <Input
-                    type="text"
-                    placeholder="Enter custom surface type"
-                    value={customSurface}
-                    onChange={(e) => setCustomSurface(e.target.value)}
-                    className="bg-background"
-                  />
-                </div>
-              )}
-            </div>
+                {surfaceType === "Other" && (
+                  <div className="mt-2">
+                    <Input
+                      type="text"
+                      placeholder="Enter custom surface type"
+                      value={customSurface}
+                      onChange={(e) => setCustomSurface(e.target.value)}
+                      className="bg-background"
+                    />
+                  </div>
+                )}
+                <p className="text-muted-foreground text-sm mt-1">Choose the surface that best represents where this sample was taken.</p>
+              </div>
 
-            {/* Lead Dust Input */}
-            <div className="space-y-2">
-              <Label htmlFor="leadDust">Lead Dust (μg/ft²)</Label>
-              <Input
-                id="leadDust"
-                type="number"
-                step="0.01"
-                placeholder="Enter lead dust level"
-                value={leadDust}
-                onChange={(e) => setLeadDust(e.target.value)}
-                className="bg-background"
-              />
+              <div className="space-y-2">
+                <Label htmlFor="leadDust">Lead Dust (μg/ft²)</Label>
+                <Input
+                  id="leadDust"
+                  type="number"
+                  step="0.01"
+                  placeholder="Enter lead dust level"
+                  value={leadDust}
+                  onChange={(e) => setLeadDust(e.target.value)}
+                  className="bg-background"
+                />
+                <GuidanceBlock metricKey={surfaceType === 'Floor' ? 'floorDust' : surfaceType === 'Window Sill' ? 'windowSill' : surfaceType === 'Window Trough' ? 'windowTrough' : 'floorDust'} value={leadDust} />
+              </div>
             </div>
 
             {/* Auto Pass/Fail Field */}
