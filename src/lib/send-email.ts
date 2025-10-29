@@ -109,8 +109,7 @@ export async function sendFileToWebhook(
     });
 
     return res.ok;
-  } catch (err) {
-    console.error("sendFileToWebhook error", err);
+  } catch (_err) {
     return false;
   }
 }
@@ -154,8 +153,7 @@ export async function sendFileAsJsonToWebhook(
     });
 
     return res.ok;
-  } catch (err) {
-    console.error("sendFileAsJsonToWebhook error", err);
+  } catch (_err) {
     return false;
   }
 }

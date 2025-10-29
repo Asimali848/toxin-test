@@ -3,12 +3,12 @@ import type React from "react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { TooltipDemo } from "@/components/ui/guidance-block";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTestStore } from "@/lib/store";
 import { CancelModal } from "./cancel-modal";
-import GuidanceBlock from "@/components/ui/guidance-block";
 
 export function DustTestForm() {
   const { data, updateDustData, resetData, setShowResults } = useTestStore();
@@ -75,7 +75,7 @@ export function DustTestForm() {
 
         <CardContent>
           <form onSubmit={handleSave} className="space-y-6">
-            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="surfaceType">Surface Type</Label>
                 <Select value={surfaceType} onValueChange={(value) => setSurfaceType(value)}>
@@ -101,21 +101,36 @@ export function DustTestForm() {
                     />
                   </div>
                 )}
-                <p className="text-muted-foreground text-sm mt-1">Choose the surface that best represents where this sample was taken.</p>
+                <p className="mt-1 text-muted-foreground text-sm">
+                  Choose the surface that best represents where this sample was taken.
+                </p>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="leadDust">Lead Dust (μg/ft²)</Label>
-                <Input
-                  id="leadDust"
-                  type="number"
-                  step="0.01"
-                  placeholder="Enter lead dust level"
-                  value={leadDust}
-                  onChange={(e) => setLeadDust(e.target.value)}
-                  className="bg-background"
-                />
-                <GuidanceBlock metricKey={surfaceType === 'Floor' ? 'floorDust' : surfaceType === 'Window Sill' ? 'windowSill' : surfaceType === 'Window Trough' ? 'windowTrough' : 'floorDust'} value={leadDust} />
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="leadDust"
+                    type="number"
+                    step="0.01"
+                    placeholder="Enter lead dust level"
+                    value={leadDust}
+                    onChange={(e) => setLeadDust(e.target.value)}
+                    className="bg-background"
+                  />
+                  <TooltipDemo
+                    metricKey={
+                      surfaceType === "Floor"
+                        ? "floorDust"
+                        : surfaceType === "Window Sill"
+                          ? "windowSill"
+                          : surfaceType === "Window Trough"
+                            ? "windowTrough"
+                            : "floorDust"
+                    }
+                    value={leadDust}
+                  />
+                </div>
               </div>
             </div>
 

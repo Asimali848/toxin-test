@@ -61,19 +61,19 @@ export async function generatePDF(
   pdf.text(
     userInfo.inspectionDate
       ? new Date(userInfo.inspectionDate).toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      })
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        })
       : new Date().toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
     45,
     yPosition + 4,
   );
@@ -177,9 +177,9 @@ export async function generatePDF(
     pdf.text("Overall environmental health scores across all test categories", 15, yPosition);
     yPosition += 10;
 
-      try {
-        const fitted = await loadImageAndFit(chartImages.summaryChart, pageWidth - 50, 80);
-        pdf.addImage(chartImages.summaryChart, "PNG", 25, yPosition, fitted.width, fitted.height);
+    try {
+      const fitted = await loadImageAndFit(chartImages.summaryChart, pageWidth - 50, 80);
+      pdf.addImage(chartImages.summaryChart, "PNG", 25, yPosition, fitted.width, fitted.height);
       yPosition += fitted.height + 10;
     } catch (_error) {
       pdf.setFontSize(9);

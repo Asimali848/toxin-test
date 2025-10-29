@@ -434,7 +434,8 @@ export function analyzeSurfaceQuality(data: Record<string, string>): Record<stri
   ];
   const detailedValues = detailedKeys.map((k) => Number.parseFloat((data as any)[k] ?? "") || 0);
   const maxDetailed = detailedValues.length ? Math.max(...detailedValues) : 0;
-  const leadPaint = !Number.isNaN(leadFromXRF) && leadFromXRF > 0 ? leadFromXRF : Math.max(leadRoom1, leadRoom2, maxDetailed);
+  const leadPaint =
+    !Number.isNaN(leadFromXRF) && leadFromXRF > 0 ? leadFromXRF : Math.max(leadRoom1, leadRoom2, maxDetailed);
   results.leadPaintXRF = {
     value: leadPaint,
     level: leadPaint <= 0.4 ? "normal" : leadPaint <= 0.9 ? "warning" : "high",

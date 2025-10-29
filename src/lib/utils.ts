@@ -1,7 +1,7 @@
 import { type ClassValue, clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
 import { GlobalWorkerOptions, getDocument, type PDFDocumentProxy } from "pdfjs-dist";
 import pdfjsWorker from "pdfjs-dist/build/pdf.worker.min?url";
+import { twMerge } from "tailwind-merge";
 
 GlobalWorkerOptions.workerSrc = pdfjsWorker;
 

@@ -71,7 +71,11 @@ export function UserInfoForm({ onNext }: UserInfoFormProps) {
                   <FormItem>
                     <FormLabel className="text-foreground">Full Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter the client full name" className="bg-background text-foreground" {...field} />
+                      <Input
+                        placeholder="Enter the client full name"
+                        className="bg-background text-foreground"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

@@ -151,11 +151,12 @@ export const guidanceMap: Record<string, GuidanceBlockData> = {
 
 export function getGuidance(metricKey: string, rawValue?: string | number) {
   const def = guidanceMap[metricKey] || {};
-  if (rawValue == null || rawValue === "") return {
-    avgForNY: def.avgForNY || "",
-    causes: def.causes || "",
-    actions: def.actions || "",
-  };
+  if (rawValue == null || rawValue === "")
+    return {
+      avgForNY: def.avgForNY || "",
+      causes: def.causes || "",
+      actions: def.actions || "",
+    };
 
   const value = typeof rawValue === "string" ? parseFloat(rawValue) : rawValue;
   if (Number.isNaN(value)) {

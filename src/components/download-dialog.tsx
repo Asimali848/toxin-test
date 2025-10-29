@@ -1,5 +1,4 @@
-
-import { Download} from "lucide-react";
+import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -21,17 +20,11 @@ interface DownloadDialogProps {
   userInfo?: UserInfo;
 }
 
-export function DownloadDialog({
-  open,
-  onOpenChange,
-  onSimpleDownload,
-  isGeneratingPDF,
-}: DownloadDialogProps) {
+export function DownloadDialog({ open, onOpenChange, onSimpleDownload, isGeneratingPDF }: DownloadDialogProps) {
   const handleSimpleDownload = () => {
     onSimpleDownload();
     onOpenChange(false);
   };
-
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

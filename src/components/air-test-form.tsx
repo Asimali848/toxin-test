@@ -1,10 +1,10 @@
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { TooltipDemo } from "@/components/ui/guidance-block";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useTestStore } from "@/lib/store";
-import GuidanceBlock from "@/components/ui/guidance-block";
 
 export function AirTestForm() {
   const { data, updateAirData, setCurrentTab } = useTestStore();
@@ -28,33 +28,37 @@ export function AirTestForm() {
           }}
           className="space-y-6"
         >
-          <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             <div className="space-y-2">
               <Label htmlFor="carbonDioxide">Carbon Dioxide (ppm)</Label>
-              <Input
-                id="carbonDioxide"
-                type="number"
-                step="0.01"
-                placeholder="Enter CO₂ level"
-                value={airData.carbonDioxide}
-                onChange={(e) => updateAirData({ carbonDioxide: e.target.value })}
-                className="bg-background"
-              />
-              <GuidanceBlock metricKey="carbonDioxide" value={airData.carbonDioxide} />
+              <div className="flex items-center gap-2">
+                <Input
+                  id="carbonDioxide"
+                  type="number"
+                  step="0.01"
+                  placeholder="Enter CO₂ level"
+                  value={airData.carbonDioxide}
+                  onChange={(e) => updateAirData({ carbonDioxide: e.target.value })}
+                  className="bg-background"
+                />
+                <TooltipDemo metricKey="carbonDioxide" value={airData.carbonDioxide} />
+              </div>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="carbonMonoxide">Carbon Monoxide (ppm)</Label>
-              <Input
-                id="carbonMonoxide"
-                type="number"
-                step="0.01"
-                placeholder="Enter CO level"
-                value={airData.carbonMonoxide}
-                onChange={(e) => updateAirData({ carbonMonoxide: e.target.value })}
-                className="bg-background"
-              />
-              <GuidanceBlock metricKey="carbonMonoxide" value={airData.carbonMonoxide} />
+              <div className="flex items-center gap-2">
+                <Input
+                  id="carbonMonoxide"
+                  type="number"
+                  step="0.01"
+                  placeholder="Enter CO level"
+                  value={airData.carbonMonoxide}
+                  onChange={(e) => updateAirData({ carbonMonoxide: e.target.value })}
+                  className="bg-background"
+                />
+                <TooltipDemo metricKey="carbonMonoxide" value={airData.carbonMonoxide} />
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -72,16 +76,18 @@ export function AirTestForm() {
 
             <div className="space-y-2">
               <Label htmlFor="pm25">PM 2.5 (μg/m³)</Label>
-              <Input
-                id="pm25"
-                type="number"
-                step="0.01"
-                placeholder="Enter PM 2.5 level"
-                value={airData.pm25}
-                onChange={(e) => updateAirData({ pm25: e.target.value })}
-                className="bg-background"
-              />
-              <GuidanceBlock metricKey="pm25" value={airData.pm25} />
+              <div className="flex items-center gap-2">
+                <Input
+                  id="pm25"
+                  type="number"
+                  step="0.01"
+                  placeholder="Enter PM 2.5 level"
+                  value={airData.pm25}
+                  onChange={(e) => updateAirData({ pm25: e.target.value })}
+                  className="bg-background"
+                />
+                <TooltipDemo metricKey="pm25" value={airData.pm25} />
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -99,16 +105,18 @@ export function AirTestForm() {
 
             <div className="space-y-2">
               <Label htmlFor="relativeHumidity">Relative Humidity (%)</Label>
-              <Input
-                id="relativeHumidity"
-                type="number"
-                step="0.01"
-                placeholder="Enter humidity level"
-                value={airData.relativeHumidity}
-                onChange={(e) => updateAirData({ relativeHumidity: e.target.value })}
-                className="bg-background"
-              />
-              <GuidanceBlock metricKey="relativeHumidity" value={airData.relativeHumidity} />
+              <div className="flex items-center gap-2">
+                <Input
+                  id="relativeHumidity"
+                  type="number"
+                  step="0.01"
+                  placeholder="Enter humidity level"
+                  value={airData.relativeHumidity}
+                  onChange={(e) => updateAirData({ relativeHumidity: e.target.value })}
+                  className="bg-background"
+                />
+                <TooltipDemo metricKey="relativeHumidity" value={airData.relativeHumidity} />
+              </div>
             </div>
 
             <div className="space-y-2">

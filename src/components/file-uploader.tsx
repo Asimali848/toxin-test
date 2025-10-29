@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { sendFileToWebhook, sendFileAsJsonToWebhook } from "@/lib/send-email";
+import { sendFileAsJsonToWebhook, sendFileToWebhook } from "@/lib/send-email";
 import { useTestStore } from "@/lib/store";
 
 interface UploadModalProps {
@@ -67,16 +67,13 @@ const UploadModal = ({ open, onClose, onUpload, companyId, employeeId }: UploadM
           } else {
             toast.error(`Failed to send JSON payload for ${file.name}`);
           }
-        } catch (err) {
-          console.error(err);
-        }
+        } catch (_err) {}
       }
 
       onUpload(uploadedFiles);
       setUploadedFiles([]);
       onClose();
-    } catch (err) {
-      console.error(err);
+    } catch (_err) {
       toast.error("Something went wrong, please try again!");
     } finally {
       setIsLoading(false);

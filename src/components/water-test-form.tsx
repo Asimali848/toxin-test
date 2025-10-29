@@ -3,10 +3,10 @@
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { TooltipDemo } from "@/components/ui/guidance-block";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useTestStore } from "@/lib/store";
-import GuidanceBlock from "@/components/ui/guidance-block";
 
 export function WaterTestForm() {
   const { data, updateWaterData, setCurrentTab } = useTestStore();
@@ -33,7 +33,7 @@ export function WaterTestForm() {
           <div className="space-y-6">
             <div className="space-y-4">
               <h3 className="font-semibold text-foreground text-sm">Metals in Drinking Water (ppb)</h3>
-              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <div className="space-y-2">
                   <Label htmlFor="silver">Silver (Ag)</Label>
                   <Input
@@ -49,16 +49,18 @@ export function WaterTestForm() {
 
                 <div className="space-y-2">
                   <Label htmlFor="arsenic">Arsenic (As)</Label>
-                  <Input
-                    id="arsenic"
-                    type="number"
-                    step="0.01"
-                    placeholder="Enter As level"
-                    value={waterData.arsenic}
-                    onChange={(e) => updateWaterData({ arsenic: e.target.value })}
-                    className="bg-background"
-                  />
-                  <GuidanceBlock metricKey="arsenic" value={waterData.arsenic} />
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="arsenic"
+                      type="number"
+                      step="0.01"
+                      placeholder="Enter As level"
+                      value={waterData.arsenic}
+                      onChange={(e) => updateWaterData({ arsenic: e.target.value })}
+                      className="bg-background"
+                    />
+                    <TooltipDemo metricKey="arsenic" value={waterData.arsenic} />
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -115,16 +117,18 @@ export function WaterTestForm() {
 
                 <div className="space-y-2">
                   <Label htmlFor="lead">Lead (Pb)</Label>
-                  <Input
-                    id="lead"
-                    type="number"
-                    step="0.01"
-                    placeholder="Enter Pb level"
-                    value={waterData.lead}
-                    onChange={(e) => updateWaterData({ lead: e.target.value })}
-                    className="bg-background"
-                  />
-                  <GuidanceBlock metricKey="lead" value={waterData.lead} />
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="lead"
+                      type="number"
+                      step="0.01"
+                      placeholder="Enter Pb level"
+                      value={waterData.lead}
+                      onChange={(e) => updateWaterData({ lead: e.target.value })}
+                      className="bg-background"
+                    />
+                    <TooltipDemo metricKey="lead" value={waterData.lead} />
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -142,19 +146,21 @@ export function WaterTestForm() {
               </div>
             </div>
 
-            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="pfas">PFAS in Drinking Water (ppt)</Label>
-                <Input
-                  id="pfas"
-                  type="number"
-                  step="0.01"
-                  placeholder="Enter PFAS level"
-                  value={waterData.pfas}
-                  onChange={(e) => updateWaterData({ pfas: e.target.value })}
-                  className="bg-background"
-                />
-                <GuidanceBlock metricKey="pfas" value={waterData.pfas} />
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="pfas"
+                    type="number"
+                    step="0.01"
+                    placeholder="Enter PFAS level"
+                    value={waterData.pfas}
+                    onChange={(e) => updateWaterData({ pfas: e.target.value })}
+                    className="bg-background"
+                  />
+                  <TooltipDemo metricKey="pfas" value={waterData.pfas} />
+                </div>
               </div>
 
               <div className="space-y-2">
