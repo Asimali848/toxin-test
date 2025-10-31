@@ -772,50 +772,50 @@ export async function generatePDF(
 //   }
 // }
 
-async function _sendEmailWithPDF(
-  email: string,
-  pdfData: string,
-  fileName: string,
-  userInfo: UserInfo,
-): Promise<boolean> {
-  try {
-    // Convert data URI to blob
-    const response = await fetch(pdfData);
-    const blob = await response.blob();
+// async function _sendEmailWithPDF(
+//   email: string,
+//   pdfData: string,
+//   fileName: string,
+//   userInfo: UserInfo,
+// ): Promise<boolean> {
+//   try {
+//     // Convert data URI to blob
+//     const response = await fetch(pdfData);
+//     const blob = await response.blob();
 
-    // Create FormData for email service
-    const formData = new FormData();
-    formData.append("email", email);
-    formData.append("subject", `Environmental Test Report - ${userInfo.name || "Client"}`);
-    formData.append(
-      "body",
-      `
-Dear ${userInfo.name || "Valued Client"},
+//     // Create FormData for email service
+//     const formData = new FormData();
+//     formData.append("email", email);
+//     formData.append("subject", `Environmental Test Report - ${userInfo.name || "Client"}`);
+//     formData.append(
+//       "body",
+//       `
+// Dear ${userInfo.name || "Valued Client"},
 
-Thank you for using our environmental testing services. Please find attached your comprehensive environmental health report.
+// Thank you for using our environmental testing services. Please find attached your comprehensive environmental health report.
 
-This report contains detailed analysis of:
-- Air Quality Tests
-- Water Quality Tests  
-- Surface Quality Tests
-- Dust Quality Tests
+// This report contains detailed analysis of:
+// - Air Quality Tests
+// - Water Quality Tests  
+// - Surface Quality Tests
+// - Dust Quality Tests
 
-If you have any questions about this report, please don't hesitate to contact us.
+// If you have any questions about this report, please don't hesitate to contact us.
 
-Best regards,
-Toxin Testers Team
-    `,
-    );
-    formData.append("attachment", blob, fileName);
+// Best regards,
+// Toxin Testers Team
+//     `,
+//     );
+//     formData.append("attachment", blob, fileName);
 
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+//     // Simulate API call delay
+//     await new Promise((resolve) => setTimeout(resolve, 2000));
 
-    return true;
-  } catch (_error) {
-    return false;
-  }
-}
+//     return true;
+//   } catch (_error) {
+//     return false;
+//   }
+// }
 
 export function getRiskColorRGB(level: RiskLevel): { r: number; g: number; b: number } {
   switch (level) {
