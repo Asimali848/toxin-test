@@ -423,6 +423,7 @@ export function ResultsDashboard() {
             userInfo,
             chartImages,
           );
+          //@ts-ignore
           basicPdf.save();
           toast.success("PDF downloaded successfully!");
           return;
