@@ -1,6 +1,17 @@
 import jsPDF from "jspdf";
+
 import type { RiskLevel } from "./analysis";
 import type { UserInfo } from "./types";
+
+// type RiskLevel = "normal" | "warning" | "high";
+// type UserInfo = {
+//   name?: string;
+//   email?: string;
+//   phoneNumber?: string;
+//   address?: string;
+//   inspectionDate?: string;
+//   inspector?: string;
+// };
 
 export async function generatePDF(
   airAnalysis: Record<string, { value: number; level: RiskLevel; message: string }>,
@@ -458,7 +469,310 @@ export async function generatePDF(
   };
 }
 
-export async function sendEmailWithPDF(
+// export async function generatePDF(
+//   airAnalysis: Record<string, { value: number; level: RiskLevel; message: string }>,
+//   waterAnalysis: Record<string, { value: number; level: RiskLevel; message: string }>,
+//   surfaceAnalysis: Record<string, { value: number; level: RiskLevel; message: string }>,
+//   dustAnalysis: Record<string, { value: number; level: RiskLevel; message: string }>,
+//   userInfo: UserInfo,
+//   chartImages?: {
+//     airChart?: string;
+//     waterChart?: string;
+//     surfaceChart?: string;
+//     dustChart?: string;
+//     summaryChart?: string;
+//   },
+// ) {
+//   const pdf = new jsPDF("p", "mm", "a4");
+//   const pageWidth = pdf.internal.pageSize.getWidth();
+//   const pageHeight = pdf.internal.pageSize.getHeight();
+//   let yPosition = 20;
+
+//   // === 🟦 HEADER / BRANDING ===
+//   pdf.setDrawColor(59, 130, 246);
+//   pdf.setLineWidth(1);
+//   pdf.line(15, yPosition - 10, pageWidth - 15, yPosition - 10);
+
+//   pdf.setFont("helvetica", "bold");
+//   pdf.setFontSize(28);
+//   pdf.setTextColor(59, 130, 246);
+//   pdf.text("TOXIN TESTERS", pageWidth / 2, yPosition, { align: "center" });
+
+//   yPosition += 10;
+//   pdf.setFontSize(16);
+//   pdf.setTextColor(0, 0, 0);
+//   pdf.text("Environmental Health Analysis Report", pageWidth / 2, yPosition, { align: "center" });
+
+//   yPosition += 5;
+//   pdf.setFontSize(10);
+//   pdf.setTextColor(120, 120, 120);
+//   pdf.text("Comprehensive Testing & Evaluation", pageWidth / 2, yPosition, { align: "center" });
+
+//   yPosition += 15;
+
+//   // === 📋 REPORT HEADER BLOCK ===
+//   pdf.setDrawColor(220, 220, 220);
+//   pdf.setFillColor(248, 249, 250);
+//   pdf.roundedRect(15, yPosition, pageWidth - 30, 28, 3, 3, "FD");
+//   yPosition += 7;
+
+//   pdf.setFontSize(10);
+//   pdf.setFont("helvetica", "bold");
+//   pdf.setTextColor(0, 0, 0);
+//   pdf.text("Property:", 20, yPosition);
+//   pdf.setFont("helvetica", "normal");
+//   pdf.text(userInfo.address || "Not specified", 45, yPosition);
+
+//   yPosition += 5;
+//   pdf.setFont("helvetica", "bold");
+//   pdf.text("Inspector:", 20, yPosition);
+//   pdf.setFont("helvetica", "normal");
+//   pdf.text(userInfo.inspector || "M. Eckstein", 45, yPosition);
+
+//   yPosition += 5;
+//   pdf.setFont("helvetica", "bold");
+//   pdf.text("Date:", 20, yPosition);
+//   pdf.setFont("helvetica", "normal");
+//   pdf.text(
+//     userInfo.inspectionDate
+//       ? new Date(userInfo.inspectionDate).toLocaleDateString("en-US", {
+//           year: "numeric",
+//           month: "short",
+//           day: "numeric",
+//         })
+//       : new Date().toLocaleDateString("en-US"),
+//     45,
+//     yPosition,
+//   );
+
+//   yPosition += 10;
+
+//   // === 👤 CLIENT DETAILS CARD ===
+//   if (userInfo.name) {
+//     pdf.setDrawColor(200, 200, 200);
+//     pdf.setFillColor(255, 255, 255);
+//     pdf.roundedRect(15, yPosition, pageWidth - 30, 30, 3, 3, "FD");
+//     yPosition += 7;
+
+//     pdf.setFont("helvetica", "bold");
+//     pdf.setFontSize(12);
+//     pdf.text("Client Information", 20, yPosition);
+//     yPosition += 5;
+
+//     pdf.setFont("helvetica", "normal");
+//     pdf.setFontSize(10);
+//     pdf.text(`Name: ${userInfo.name}`, 25, yPosition);
+//     yPosition += 5;
+//     pdf.text(`Email: ${userInfo.email}`, 25, yPosition);
+//     yPosition += 5;
+//     pdf.text(`Phone: ${userInfo.phoneNumber}`, 25, yPosition);
+//     yPosition += 5;
+//     pdf.text(`Address: ${userInfo.address}`, 25, yPosition);
+//     yPosition += 10;
+//   }
+
+//   // === 💬 INTRO MESSAGE ===
+//   pdf.setFont("helvetica", "bold");
+//   pdf.setFontSize(12);
+//   pdf.text("Dear Valued Client,", 15, yPosition);
+//   yPosition += 6;
+//   pdf.setFont("helvetica", "normal");
+//   pdf.setFontSize(10);
+//   pdf.setTextColor(60, 60, 60);
+//   const introText = pdf.splitTextToSize(
+//     "We are pleased to share your comprehensive environmental health report, covering key environmental parameters—air, water, surface, and dust. This analysis highlights potential risks, ensures compliance with EPA guidelines, and promotes safer living and working spaces.",
+//     pageWidth - 30,
+//   );
+//   pdf.text(introText, 15, yPosition);
+//   yPosition += introText.length * 5 + 10;
+
+//   // === 📊 CATEGORY SECTIONS ===
+//   const sections = [
+//     { title: "Air Quality Analysis", data: airAnalysis, chart: chartImages?.airChart },
+//     { title: "Water Quality Analysis", data: waterAnalysis, chart: chartImages?.waterChart },
+//     { title: "Surface Quality Analysis", data: surfaceAnalysis, chart: chartImages?.surfaceChart },
+//     { title: "Dust Quality Analysis", data: dustAnalysis, chart: chartImages?.dustChart },
+//   ];
+
+//   for (const section of sections) {
+//     await addSection(section.title, section.data, section.chart);
+//   }
+
+//   // === 🌍 SUMMARY PAGE ===
+//   pdf.addPage();
+//   yPosition = 20;
+//   pdf.setFont("helvetica", "bold");
+//   pdf.setFontSize(14);
+//   pdf.setTextColor(59, 130, 246);
+//   pdf.text("Environmental Health Summary", 15, yPosition);
+//   yPosition += 8;
+
+//   const score = calculateWeightedScore(airAnalysis, waterAnalysis, surfaceAnalysis, dustAnalysis);
+//   pdf.setFont("helvetica", "bold");
+//   pdf.setFontSize(30);
+//   pdf.setTextColor(34, 197, 94);
+//   pdf.text(`${Math.round(score)}/100`, pageWidth / 2, yPosition, { align: "center" });
+//   yPosition += 15;
+
+//   pdf.setFontSize(10);
+//   pdf.setTextColor(80, 80, 80);
+//   pdf.text("Weighted score: Air & Water (30%), Surface & Dust (20%)", pageWidth / 2, yPosition, { align: "center" });
+//   yPosition += 10;
+
+//   if (chartImages?.summaryChart) {
+//     const fitted = await loadImageAndFit(chartImages.summaryChart, pageWidth - 50, 80);
+//     pdf.addImage(chartImages.summaryChart, "PNG", 25, yPosition, fitted.width, fitted.height);
+//     yPosition += fitted.height + 10;
+//   }
+
+//   // === 🧠 RECOMMENDATIONS ===
+//   pdf.addPage();
+//   yPosition = 20;
+//   pdf.setFont("helvetica", "bold");
+//   pdf.setFontSize(14);
+//   pdf.text("Recommendations & Care Notes", 15, yPosition);
+//   yPosition += 10;
+//   //@ts-ignore
+//   addRecommendation("✅ Normal Levels", "34,197,94", "Maintain regular cleaning, ventilation, and yearly re-testing.");
+//   //@ts-ignore
+//   addRecommendation(
+//     "⚠️ Warning Levels",
+//     "234,179,8",
+//     "Investigate possible contamination sources. Increase ventilation and schedule re-test within 30 days."
+//   );
+//   //@ts-ignore
+//   addRecommendation(
+//     "🚨 High Risk Levels",
+//     "239,68,68",
+//     "Immediate remediation required. Contact a certified environmental health specialist for urgent action."
+//   );
+
+//   // === 📞 CONTACT FOOTER ===
+//   yPosition = pageHeight - 25;
+//   pdf.setFontSize(8);
+//   pdf.setTextColor(100, 100, 100);
+//   pdf.text("Toxin Testers • www.toxintesters.com • info@toxintesters.com", pageWidth / 2, yPosition, { align: "center" });
+//   yPosition += 5;
+//   pdf.text("© 2025 Toxin Testers. All rights reserved.", pageWidth / 2, yPosition, { align: "center" });
+
+//   // === 🧾 FILE NAME ===
+//   const clientName = userInfo.name ? userInfo.name.replace(/\s+/g, "-").toLowerCase() : "client";
+//   const fileName = `environmental-report-${clientName}-${new Date().toISOString().split("T")[0]}.pdf`;
+
+//   return {
+//     pdfData: pdf.output("datauristring"),
+//     fileName,
+//     save: () => pdf.save(fileName),
+//   };
+
+//   // --- Helper Functions ---
+//   async function addSection(title: string, data: any, chartImage?: string) {
+//     if (yPosition > pageHeight - 80) {
+//       pdf.addPage();
+//       yPosition = 20;
+//     }
+
+//     pdf.setFont("helvetica", "bold");
+//     pdf.setFontSize(13);
+//     pdf.setTextColor(59, 130, 246);
+//     pdf.text(title, 15, yPosition);
+//     yPosition += 6;
+
+//     pdf.setFont("helvetica", "normal");
+//     pdf.setTextColor(0, 0, 0);
+//     pdf.setFontSize(10);
+//     // Object.entries(data).forEach(([key, val]) => {
+//     //   const color = getRiskColorRGB(val.level);
+//     //   pdf.setTextColor(color.r, color.g, color.b);
+//     //   pdf.text(`${key}: ${val.value} (${val.level.toUpperCase()})`, 20, yPosition);
+//     //   pdf.setFontSize(9);
+//     //   pdf.setTextColor(60, 60, 60);
+//     //   pdf.text(`↳ ${val.message}`, 25, yPosition + 4);
+//     //   yPosition += 8;
+//     //   pdf.setFontSize(10);
+//     // });
+//     for (const [key, val] of Object.entries(data)) {
+//       const label = key.replace(/([A-Z])/g, " $1").trim();
+//       //@ts-ignore
+//       const color = getRiskColorRGB(val.level);
+//       pdf.setTextColor(color.r, color.g, color.b);
+//       //@ts-ignore
+//       pdf.text(`${label}: ${val.value} - ${val.level.toUpperCase()}`, 20, yPosition);
+//       pdf.setTextColor(0, 0, 0);
+//       yPosition += 5;
+//       pdf.setFontSize(9);
+//       //@ts-ignore
+//       pdf.text(`  ${val.message}`, 20, yPosition);
+
+//     if (chartImage) {
+//       const fitted = await loadImageAndFit(chartImage, pageWidth - 50, 60);
+//       pdf.addImage(chartImage, "PNG", 25, yPosition, fitted.width, fitted.height);
+//       yPosition += fitted.height + 8;
+//     }
+//   }
+
+//   function _addRecommendation(title: string, color: string, text: string) {
+//     const [r, g, b] = color.split(",").map(Number);
+//     pdf.setFont("helvetica", "bold");
+//     pdf.setTextColor(r, g, b);
+//     pdf.setFontSize(11);
+//     pdf.text(title, 20, yPosition);
+//     yPosition += 5;
+
+//     pdf.setFont("helvetica", "normal");
+//     pdf.setTextColor(0, 0, 0);
+//     pdf.setFontSize(9);
+//     const split = pdf.splitTextToSize(text, pageWidth - 40);
+//     pdf.text(split, 25, yPosition);
+//     yPosition += split.length * 5 + 6;
+//   }
+
+//   function getRiskColorRGB(level: RiskLevel) {
+//     switch (level) {
+//       case "high":
+//         return { r: 239, g: 68, b: 68 };
+//       case "warning":
+//         return { r: 234, g: 179, b: 8 };
+//       default:
+//         return { r: 34, g: 197, b: 94 };
+//     }
+//   }
+
+//   async function loadImageAndFit(image: string, maxWidth: number, maxHeight: number) {
+//     const img = new Image();
+//     img.src = image;
+//     await img.decode();
+//     const ratio = Math.min(maxWidth / img.width, maxHeight / img.height);
+//     return { width: img.width * ratio, height: img.height * ratio };
+//   }
+
+//   function _calculateWeightedScore(
+//     air: Record<string, any>,
+//     water: Record<string, any>,
+//     surface: Record<string, any>,
+//     dust: Record<string, any>,
+//   ) {
+//     const avg = (obj: any) =>
+//       // Object.values(obj).reduce((sum: any, val: any) => sum + val.value, 0) / Object.keys(obj).length || 0;
+//       Object.values(obj)
+//         .map((a: any) => {
+//           switch (a.level) {
+//             case "normal":
+//               return 100;
+//             case "warning":
+//               return 60;
+//             case "high":
+//               return 20;
+//             default:
+//               return 0;
+//           }
+//         })
+//         .reduce((a: number, b: number) => a + b, 0) / Object.keys(obj).length || 0;
+//     return avg(air) * 0.3 + avg(water) * 0.3 + avg(surface) * 0.2 + avg(dust) * 0.2;
+//   }
+// }
+
+async function _sendEmailWithPDF(
   email: string,
   pdfData: string,
   fileName: string,
@@ -503,7 +817,7 @@ Toxin Testers Team
   }
 }
 
-function getRiskColorRGB(level: RiskLevel): { r: number; g: number; b: number } {
+export function getRiskColorRGB(level: RiskLevel): { r: number; g: number; b: number } {
   switch (level) {
     case "normal":
       return { r: 34, g: 197, b: 94 };
